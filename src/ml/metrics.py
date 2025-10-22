@@ -121,3 +121,38 @@ def ascii_word_dist(str1: str, str2: str) -> int:
 
     return total
 
+
+#This one is because I need an excuse to make a new branch and a pull request rn
+def taxicab_distance(vec1, vec2):
+    """
+    Computes the Taxicab (Manhattan) distance between two vectors.
+
+    The Taxicab distance is defined as the sum of the absolute differences
+    between corresponding elements of two input vectors. It represents the
+    distance one would travel in a grid-like path, similar to navigating
+    city blocks.
+
+    Parameters:
+        vec1 (list or array-like): First input vector.
+        vec2 (list or array-like): Second input vector.
+
+    Returns:
+        float: The Taxicab distance between vec1 and vec2.
+
+    Raises:
+        ValueError: If either vector is None, empty, or if their lengths do not match.
+        TypeError: If any element in either vector is not numeric.
+    """
+    if vec1 is None or vec2 is None:
+        raise ValueError("Input vectors must not be None")
+
+    if not vec1 or not vec2:
+        raise ValueError("Input vectors must be non-empty")
+
+    if len(vec1) != len(vec2):
+        raise ValueError("Vectors must be of the same length")
+
+    if not all(isinstance(x, (int, float)) for x in chain(vec1, vec2)):
+            raise TypeError("Both vectors must contain only numeric values.")
+
+    return sum(abs(a - b) for a, b in zip(vec1, vec2))
