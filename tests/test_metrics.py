@@ -1,4 +1,4 @@
-from ml.metrics import LnDistanceCostructor, LinfinityDistance, EuclideanDistance, ascii_word_dist
+from ml.metrics import LnDistanceCostructor, LinfinityDistance, EuclideanDistance, ascii_word_dist, taxicab_distance
 
 
 
@@ -297,3 +297,66 @@ def test_non_string_input():
 def test_unicode_characters():
     # Should still work for valid Unicode characters
     assert ascii_word_dist("a", "ñ") == abs(ord("a") - ord("ñ"))
+
+
+
+#taxicab tests
+
+def test_taxicab_basic():
+    assert taxicab_distance([1, 2], [4, 6]) == 7
+
+def assert_raises(exc_type, callable_obj, *args, **kwargs):
+    try:
+        callable_obj(*args, **kwargs)
+    except Exception as e:
+        assert isinstance(e, exc_type), f"Expected {exc_type}, got {type(e)}"
+    else:
+        raise AssertionError(f"Expected {exc_type} to be raised but no exception was raised")
+
+def test_raises_on_none_inputs():
+    assert_raises(ValueError, taxicab_distance, None, [1, 2, 3])
+    assert_raises(ValueError, taxicab_distance, [1, 2, 3], None)
+
+def test_raises_on_empty_vectors():
+    assert_raises(ValueError, taxicab_distance, [], [1])
+    assert_raises(ValueError, taxicab_distance, [1], [])
+
+def test_raises_on_length_mismatch():
+    assert_raises(ValueError, taxicab_distance, [1, 2], [1, 2, 3])
+
+def test_raises_on_non_numeric_elements():
+    assert_raises(TypeError, taxicab_distance, [1, 2, "three"], [1, 2, 3])
+    assert_raises(TypeError, taxicab_distance, [1, object()], [1, 2])
+
+def test_basic_positive_distance():
+    assert taxicab_distance([1, 2], [4, 6]) == 7
+
+def test_positives():
+    assert taxicab_distance([0, 1, 2], [1, 2, 3]) == 3
+
+def test_negatives():
+    assert taxicab_distance([-1, -2, -3], [-4, -5, -6]) == 9
+
+def test_mixed_signs():
+    assert taxicab_distance([-1, 2, -3], [4, -2, 3]) == 15
+
+def test_with_floats():
+    result = taxicab_distance([0.5, 1.25, -2.75], [1.5, -0.25, -1.75])
+    assert abs(result - 3.5) <= 1e-12
+
+def test_large_numbers():
+    a = [10**18, -(10**18), 10**18]
+    b = [-(10**18), 10**18, 0]
+    expected = 5 * 10**18
+    assert taxicab_distance(a, b) == expected
+
+def test_large_vector_correctness():
+    n = 50_000  # large but conservative for typical CI runners; increase if desired
+    v1 = list(range(n))
+    v2 = list(range(n - 1, -1, -1))
+    expected = sum(abs(a - b) for a, b in zip(v1, v2))
+    assert taxicab_distance(v1, v2) == expected
+
+def test_identity_zero_distance():
+    v = [0, -1.5, 2, 3.25]
+    assert taxicab_distance(v, v) == 0
