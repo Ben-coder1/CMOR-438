@@ -24,5 +24,5 @@ where = ["src"]
 
 [tool.pytest.ini_options]
 minversion = "6.0"
-addopts = "-ra -q"
-testpaths = ["tests"]
+addopts = "-ra -q --doctest-modules"
+testpaths = ["tests", "src"]
