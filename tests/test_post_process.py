@@ -1,96 +1,84 @@
-from ml.post_process import majorityLabel, averageLabel
+import numpy as np
+import pytest
+from ml.post_processing.post_process import majorityLabel, averageLabel
 
-
+# --- averageLabel tests ---
 
 def test_average_label_basic():
-    assert averageLabel([1, 2, 3, 4]) == 2.5
-    assert averageLabel([10.0, 20.0]) == 15.0
+    arr1 = np.array([1, 2, 3, 4])
+    arr2 = np.array([10.0, 20.0])
+    np.testing.assert_allclose(averageLabel(arr1), 2.5)
+    np.testing.assert_allclose(averageLabel(arr2), 15.0)
 
 def test_average_label_mixed_types():
-    assert averageLabel([1, 2.5, 3]) == (1 + 2.5 + 3) / 3
+    arr = np.array([1, 2.5, 3])
+    expected = (1 + 2.5 + 3) / 3
+    np.testing.assert_allclose(averageLabel(arr), expected)
 
 def test_average_label_large_vector():
-    vec = list(range(1000))  # 0 to 999
-    expected = sum(vec) / len(vec)
-    assert averageLabel(vec) == expected
+    arr = np.arange(1000)  # 0 to 999
+    expected = np.mean(arr)
+    np.testing.assert_allclose(averageLabel(arr), expected)
 
 def test_average_label_none_input():
-    try:
+    with pytest.raises(ValueError):
         averageLabel(None)
-        assert False, "Expected TypeError for None input"
-    except TypeError:
-        pass
 
-def test_average_label_non_list_input():
-    try:
-        averageLabel("not a list")
-        assert False, "Expected TypeError for non-list input"
-    except TypeError:
-        pass
+def test_average_label_non_array_input():
+    with pytest.raises(TypeError):
+        averageLabel("not an array")
 
-def test_average_label_empty_list():
-    try:
-        averageLabel([])
-        assert False, "Expected ValueError for empty list"
-    except ValueError:
-        pass
+def test_average_label_empty_array():
+    with pytest.raises(ValueError):
+        averageLabel(np.array([]))
 
 def test_average_label_non_numeric_elements():
-    try:
-        averageLabel([1, 'a', 3])
-        assert False, "Expected TypeError for non-numeric elements"
-    except TypeError:
-        pass
+    with pytest.raises(TypeError):
+        averageLabel(np.array([1, "a", 3], dtype=object))
 
 
-#testing for majority label
+# --- majorityLabel tests ---
 
 def test_majority_label_strings():
-    assert majorityLabel(['cat', 'dog', 'cat', 'bird']) == 'cat'
+    arr = np.array(['cat', 'dog', 'cat', 'bird'])
+    assert majorityLabel(arr) == 'cat'
 
 def test_majority_label_integers():
-    assert majorityLabel([1, 2, 2, 3, 1, 2]) == 2
+    arr = np.array([1, 2, 2, 3, 1, 2])
+    assert majorityLabel(arr) == 2
 
 def test_majority_label_floats():
-    assert majorityLabel([1.1, 2.2, 1.1, 3.3]) == 1.1
+    arr = np.array([1.1, 2.2, 1.1, 3.3])
+    assert majorityLabel(arr) == 1.1
 
 def test_majority_label_mixed_numeric():
-    assert majorityLabel([1, 1.0, 2, 1]) == 1  # 1 and 1.0 are treated as equal
+    arr = np.array([1, 1.0, 2, 1])
+    assert majorityLabel(arr) == 1  # 1 and 1.0 treated as equal
 
 def test_majority_label_mixed_types():
-    assert majorityLabel(['a', 'b', 'a', 1, 1]) == 'a'  # 'a' appears first among top counts
+    arr = np.array(['a', 'b', 'a', 1, 1], dtype=object)
+    assert majorityLabel(arr) == 'a'
 
 def test_majority_label_tie_breaking():
-    assert majorityLabel(['x', 'y', 'x', 'y']) == 'x'  # 'x' appears first
+    arr = np.array(['x', 'y', 'x', 'y'])
+    assert majorityLabel(arr) == 'x'
 
 def test_majority_label_large_input():
-    labels = ['a'] * 500 + ['b'] * 499
-    assert majorityLabel(labels) == 'a'
+    arr = np.array(['a'] * 500 + ['b'] * 499)
+    assert majorityLabel(arr) == 'a'
 
 def test_majority_label_none_input():
-    try:
+    with pytest.raises(ValueError):
         majorityLabel(None)
-        assert False, "Expected TypeError for None input"
-    except TypeError:
-        pass
 
-def test_majority_label_non_list_input():
-    try:
-        majorityLabel("not a list")
-        assert False, "Expected TypeError for non-list input"
-    except TypeError:
-        pass
+def test_majority_label_non_array_input():
+    with pytest.raises(TypeError):
+        majorityLabel("not an array")
 
-def test_majority_label_empty_list():
-    try:
-        majorityLabel([])
-        assert False, "Expected ValueError for empty list"
-    except ValueError:
-        pass
+def test_majority_label_empty_array():
+    with pytest.raises(ValueError):
+        majorityLabel(np.array([]))
 
 def test_majority_label_unhashable_elements():
-    try:
-        majorityLabel([[1], [1], [2]])
-        assert False, "Expected TypeError for unhashable elements"
-    except TypeError:
-        pass
+    with pytest.raises(TypeError):
+        majorityLabel(np.array([[1], [1], [2]], dtype=object))
