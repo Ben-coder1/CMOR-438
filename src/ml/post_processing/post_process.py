@@ -1,6 +1,7 @@
 import numpy as np
 from collections import Counter
 
+
 def majorityLabel(labels):
     """
     Return the most frequent label from a sequence or NumPy array.
@@ -21,7 +22,7 @@ def majorityLabel(labels):
     ValueError
         If the input is None or empty.
     TypeError
-        If labels are not hashable.
+        If any label is unhashable.
 
     Examples
     --------
@@ -33,15 +34,24 @@ def majorityLabel(labels):
     'x'
     """
     if labels is None:
-        raise ValueError("Labels must not be None.")
+        raise ValueError("labels must not be None.")
 
     arr = np.asarray(labels)
     if arr.size == 0:
-        raise ValueError("Label list/array must not be empty.")
+        raise ValueError("labels must not be empty.")
 
+    # Ensure all labels are hashable
+    for i, lbl in enumerate(arr):
+        try:
+            hash(lbl)
+        except Exception:
+            raise TypeError(f"labels must contain only hashable elements; element {i} is not.")
+
+    # Count frequencies
     counts = Counter(arr.tolist())
     max_count = max(counts.values())
 
+    # Return the first label that reaches max_count
     for label in arr:
         if counts[label] == max_count:
             # Convert NumPy scalars to native Python types
@@ -81,12 +91,14 @@ def averageLabel(labels):
     2.1666666666666665
     """
     if labels is None:
-        raise ValueError("Labels must not be None.")
+        raise ValueError("labels must not be None.")
 
     arr = np.asarray(labels)
     if arr.size == 0:
-        raise ValueError("Label list/array must not be empty.")
+        raise ValueError("labels must not be empty.")
+
+    # Ensure numeric dtype
     if not np.issubdtype(arr.dtype, np.number):
-        raise TypeError("All labels must be numeric.")
+        raise TypeError("labels must be numeric.")
 
     return float(np.mean(arr))

@@ -88,6 +88,18 @@ def test_custom_split_ratio():
 
 # --- normalize_vectors_by_max_abs ---
 
+#This needs a lot more tests..... Need more tests here
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+
 def test_max_abs_normalization_correctness():
     data = np.array([[1, -2], [3, 4]])
     result = normalize_vectors_by_max_abs(data)
