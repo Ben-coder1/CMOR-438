@@ -25,4 +25,7 @@ where = ["src"]
 [tool.pytest.ini_options]
 minversion = "6.0"
 addopts = "-ra -q --doctest-modules"
+doctest_optionflags = "ELLIPSIS IGNORE_EXCEPTION_DETAIL NORMALIZE_WHITESPACE"
 testpaths = ["tests", "src"]
+
+

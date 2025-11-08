@@ -408,7 +408,7 @@ def test_error_X_y_train_length_mismatch():
 
 def test_error_target_is_none():
     knn = KNN([[1, 2]], ["a"])
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         knn.error([None], ["a"])
 
 

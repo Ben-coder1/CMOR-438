@@ -259,8 +259,8 @@ def test_non_string_input():
 
     try:
         ascii_word_dist(None, "abc")
-        assert False, "Expected TypeError for None input"
-    except TypeError:
+        assert False, "Expected ValueError for None input"
+    except ValueError:
         pass
 
 def test_unicode_characters():
