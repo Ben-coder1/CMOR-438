@@ -1,7 +1,7 @@
 from typing import Optional
 import numpy as np
-from ml.distances.evaluation_metrics import classification_accuracy
-from ml.utils._errors_and_warnings.error_handling import (
+from ml.metrics_and_evaluations.evaluation.supervised.performance import classification_accuracy
+from ml.utils._errors_and_warnings._general_error_handling import (
     _ensure_numeric_array,
     InputShapeError,
     _ensure_array_like,
