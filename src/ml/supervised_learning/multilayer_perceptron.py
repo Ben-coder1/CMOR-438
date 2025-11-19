@@ -1,13 +1,14 @@
 import numpy as np
-from ml.metrics_and_evaluations.evaluation.supervised.performance import NegativeLogLikelihoodBatchConstructor, mean_squared_error
+from ml.metrics_and_evaluations.evaluation.supervised.loss_functions import APPROVED_LOSSES, mean_squared_error
+from ml.metrics_and_evaluations.evaluation.supervised.performance import classification_accuracy
 from ml.utils._errors_and_warnings._general_error_handling import (
     _ensure_numeric_array,
     _ensure_no_nan,
     _ensure_positive_int,
-    InputShapeError,
-    _validate_activation,
+    InputShapeError
 )
-from ml.utils import activations
+from ml.utils import activations, APPROVED_ACTIVATIONS
+from ml.utils._errors_and_warnings.activations_and_losses_specific import _validate_activation, _validate_loss_fn
 
 
 class DenseLayer:
@@ -20,10 +21,10 @@ class DenseLayer:
         Number of input features.
     n_outputs : int
         Number of output units.
-    activation : str or callable, optional
+    activation : str or Activation, optional
         Activation function. Defaults to 'sigmoid'.
-        Can be a string name of a pre-approved function
-        or a custom callable that maps np.ndarray -> np.ndarray.
+        Can be a string name of a pre-approved activation
+        or a custom Activation object.
 
     Attributes
     ----------
@@ -31,24 +32,17 @@ class DenseLayer:
         Weight matrix of shape (n_inputs, n_outputs).
     b : np.ndarray
         Bias vector of shape (1, n_outputs).
-    activation : callable
-        Activation function.
+    activation : Activation
+        Activation object with func and gradient.
     last_input : np.ndarray
         Cached input from last forward pass.
+    last_z : np.ndarray
+        Cached pre-activation values.
     last_output : np.ndarray
         Cached output from last forward pass.
-
-    Examples
-    --------
-    >>> layer = DenseLayer(4, 3, activation="relu")
-    >>> X = np.random.randn(5, 4)
-    >>> out = layer.forward(X)
-    >>> out.shape
-    (5, 3)
     """
 
     def __init__(self, n_inputs, n_outputs, activation="sigmoid"):
-        # Validate input/output sizes
         self.n_inputs = _ensure_positive_int(n_inputs, "n_inputs")
         self.n_outputs = _ensure_positive_int(n_outputs, "n_outputs")
 
@@ -57,21 +51,15 @@ class DenseLayer:
         self.W = np.random.randn(n_inputs, n_outputs) * scale
         self.b = np.zeros((1, n_outputs))
 
-        # Approved activations
-        approved = {
-            "sigmoid": activations.sigmoid,
-            "relu": activations.relu,
-            "tanh": activations.tanh,
-            "softmax": activations.softmax,
-            "step": activations.step,
-        }
-
-        # Validate activation function
-        self.activation = _validate_activation(activation, approved)
+        # Validate activation
+        self.activation = _validate_activation(activation, APPROVED_ACTIVATIONS)
 
         # Cache for forward pass
         self.last_input = None
+        self.last_z = None
         self.last_output = None
+
+
 
     def forward(self, X):
         """
@@ -100,11 +88,11 @@ class DenseLayer:
         >>> out.shape
         (2, 2)
         """
-        # Validate input
+       
+         # Validate input
         X = _ensure_numeric_array(X, name="X")
         _ensure_no_nan(X, name="X")
 
-        # Check feature dimension
         if X.shape[1] != self.W.shape[0]:
             raise InputShapeError(
                 f"Input has {X.shape[1]} features, expected {self.W.shape[0]}."
@@ -116,61 +104,98 @@ class DenseLayer:
 
         # Cache for backprop
         self.last_input = X
+        self.last_z = z
         self.last_output = a
         return a
 
 
+
 class MultilayerPerceptron:
     """
-    A simple multilayer perceptron (MLP) model composed of dense layers.
+        A fully connected feedforward neural network (dense architecture).
+
+        This implementation supports arbitrary layer specifications, configurable
+        learning rate, and pluggable loss functions. Layers can be provided either
+        as tuples of specifications (to construct DenseLayer objects internally)
+        or as pre-built DenseLayer instances.
+
+        Parameters
+        ----------
+        layers : list
+            Either a list of DenseLayer instances or a list of tuples specifying
+            layer construction arguments for DenseLayer.
+        learning_rate : float, optional
+            Step size for gradient descent updates. Default is 0.01.
+        loss_fn : Loss or str, optional
+            Loss function to optimize. Must be either:
+            - None (defaults to Negative Log Likelihood),
+            - A Loss instance,
+            - A string key referring to an entry in APPROVED_LOSSES.
+
+        Attributes
+        ----------
+        layers : list of DenseLayer
+            The sequence of layers in the network.
+        learning_rate : float
+            Step size for parameter updates.
+        loss_fn : Loss
+            The loss function object used for training.
+        """
+
+
+    def __init__(self, layers, learning_rate=0.01, loss_fn=None):
+        """
+    Initialize a MultilayerPerceptron.
 
     Parameters
     ----------
-    layers : list of DenseLayer or list of tuples
-        Either a list of pre-constructed DenseLayer objects,
-        or a list of specifications (n_inputs, n_outputs, activation).
-    activations : list of str, optional
-        Activation functions for each layer. Defaults to "sigmoid" for all layers
-        if not provided. Ignored if `layers` is given as specifications.
-    learning_rate : float, default=0.01
-        Learning rate for weight updates.
+    layers : list
+        Either:
+        - A list of DenseLayer instances, or
+        - A list of tuples specifying DenseLayer construction arguments.
+          Each tuple is passed to DenseLayer(*spec).
+    learning_rate : float, optional
+        Step size for gradient descent updates. Default is 0.01.
+    loss_fn : Loss or str, optional
+        Loss function to optimize. If None, defaults to Negative Log Likelihood.
+        If a string is provided, it must be a key in APPROVED_LOSSES.
+        If a Loss instance is provided, it will be validated.
 
-    Attributes
-    ----------
-    layers : list of DenseLayer
-        Sequence of dense layers.
-    activations : list of str
-        Activation functions for each layer.
-    learning_rate : float
-        Learning rate for weight updates.
+    Raises
+    ------
+    TypeError
+        If loss_fn is neither a Loss instance nor a string.
+    ValueError
+        If a string loss_fn is not found in APPROVED_LOSSES.
+
+    Notes
+    -----
+    After initialization, `self.loss_fn` is always a Loss object, ensuring
+    consistent usage in training and evaluation.
 
     Examples
     --------
-    >>> mlp = MultilayerPerceptron([(2, 3, "relu"), (3, 2, "softmax")], learning_rate=0.1)
-    >>> X = np.array([[0,0],[1,1]])
-    >>> preds = mlp.predict(X)
+    >>> mlp = MultilayerPerceptron(
+    ...     layers=[(2, 4, "relu"), (4, 1, "sigmoid")],
+    ...     learning_rate=0.05,
+    ...     loss_fn="MAE"
+    ... )
     """
-
-    def __init__(self, layers, activations=None, learning_rate=0.01):
-        # Allow either DenseLayer objects or specifications
+        if not layers or len(layers) == 0:
+            raise ValueError("MultilayerPerceptron must be constructed with at least one layer.")
         if all(isinstance(layer, tuple) for layer in layers):
+            # Build layers from specs
             self.layers = [DenseLayer(*spec) for spec in layers]
-            self.activations = [spec[2] for spec in layers]
         else:
             self.layers = layers
-            if activations is None:
-                activations = ["sigmoid"] * len(layers)
-            if len(activations) != len(layers):
-                raise ValueError("Number of activations must match number of layers")
-            self.activations = activations
 
         self.learning_rate = learning_rate
-
-        # Default loss: Negative Log Likelihood (vectorized)
-        self.loss_fn = NegativeLogLikelihoodBatchConstructor()
+        if loss_fn is None:
+            self.loss_fn = APPROVED_LOSSES["cross_entropy"]
+        else:
+            self.loss_fn = _validate_loss_fn(loss_fn, APPROVED_LOSSES)
 
     def forward(self, X):
-        """Forward pass through the network."""
         out = X
         for layer in self.layers:
             out = layer.forward(out)
@@ -182,67 +207,52 @@ class MultilayerPerceptron:
         return np.argmax(probs, axis=1)
 
     def fit(self, X, y, epochs=100, verbose=True, stochastic=False, close_enough=None):
-        """
-        Train the network using gradient descent.
-
-        Parameters
-        ----------
-        X : array_like
-            Training features.
-        y : array_like
-            One-hot encoded training labels.
-        epochs : int, default=100
-            Number of training iterations.
-        verbose : bool, default=True
-            Whether to print loss during training.
-        stochastic : bool, default=False
-            If True, use stochastic gradient descent (SGD).
-            If False, use batch gradient descent.
-        close_enough : float, optional
-            Early stopping threshold. If improvement in loss between epochs
-            is less than this value, training stops.
-        """
+        """Train the network using gradient descent."""
         X = _ensure_numeric_array(X, name="X")
         _ensure_no_nan(X, name="X")
 
         prev_loss = None
         for epoch in range(epochs):
             if stochastic:
-                # SGD: update per sample
                 for i in range(X.shape[0]):
                     xi = X[i:i+1]
                     yi = y[i:i+1]
 
                     y_pred = self.forward(xi)
                     loss = self.loss_fn(yi, y_pred).mean()
+                    delta = self.loss_fn.gradient(yi, y_pred)
 
-                    delta = y_pred - yi
+                    # Backpropagation
                     for j in reversed(range(len(self.layers))):
                         layer = self.layers[j]
                         grads_W = np.dot(layer.last_input.T, delta)
-                        grads_b = delta
+                        grads_b = np.sum(delta, axis=0, keepdims=True)
                         layer.W -= self.learning_rate * grads_W
                         layer.b -= self.learning_rate * grads_b
+
                         if j > 0:
-                            prev_out = self.layers[j - 1].last_output
-                            delta = np.dot(delta, layer.W.T) * (prev_out > 0)
+                            prev_z = self.layers[j - 1].last_z
+                            deriv = self.layers[j - 1].activation.gradient(prev_z)
+                            delta = np.dot(delta, layer.W.T) * deriv
             else:
-                # Batch GD
                 y_pred = self.forward(X)
                 loss = self.loss_fn(y, y_pred).mean()
+                delta = self.loss_fn.gradient(y, y_pred)
 
-                delta = y_pred - y
+                # Backpropagation
                 for i in reversed(range(len(self.layers))):
                     layer = self.layers[i]
                     grads_W = np.dot(layer.last_input.T, delta) / X.shape[0]
                     grads_b = np.sum(delta, axis=0, keepdims=True) / X.shape[0]
                     layer.W -= self.learning_rate * grads_W
                     layer.b -= self.learning_rate * grads_b
-                    if i > 0:
-                        prev_out = self.layers[i - 1].last_output
-                        delta = np.dot(delta, layer.W.T) * (prev_out > 0)
 
-            # Early stopping check
+                    if i > 0:
+                        prev_z = self.layers[i - 1].last_z
+                        deriv = self.layers[i - 1].activation.gradient(prev_z)
+                        delta = np.dot(delta, layer.W.T) * deriv
+
+            # Early stopping
             if close_enough is not None and prev_loss is not None:
                 if abs(prev_loss - loss) < close_enough:
                     if verbose:
@@ -253,55 +263,12 @@ class MultilayerPerceptron:
             if verbose and epoch % 10 == 0:
                 print(f"Epoch {epoch}, Loss: {loss:.4f}")
 
-    def MSE(self, X, y_true, *, distance=None, sample_weight=None):
-        """
-        Compute mean squared error (MSE) for the network on given data.
 
-        This method delegates to the standalone `mean_squared_error` function,
-        passing the current model (`self`) as the predictor. It supports optional
-        custom per-sample distance functions and sample weighting.
 
-        Parameters
-        ----------
-        X : array_like
-            Input features, shape (n_samples, ...).
-        y_true : array_like
-            Targets, shape (n_samples, ...).
-        distance : callable, optional
-            Custom distance function between y_true and predictions. If None,
-            uses Euclidean norm of residuals.
-        sample_weight : array_like, optional
-            1D weights of length n_samples. If provided, errors are weighted.
 
-        Returns
-        -------
-        float
-            Mean squared error over the dataset.
 
-        Raises
-        ------
-        InputShapeError
-            If shapes are incompatible.
-        ValueError
-            If sample weights sum to zero, distance returns negatives,
-            or distance returns non-numeric values.
-        TypeError
-            If distance is not callable.
-
-        Examples
-        --------
-        >>> class Dummy:
-        ...     def predict(self, X): return X
-        >>> mlp = Dummy()
-        >>> X = np.array([[0],[1]])
-        >>> y = np.array([[0],[1]])
-        >>> round(mean_squared_error(mlp, X, y), 3)
-        0.0
-
-        """
-        return mean_squared_error(self, X, y_true,
-                                  distance=distance,
-                                  sample_weight=sample_weight)
+    def score(self, X, y):
+        return classification_accuracy(self, X, y)
 
 
 

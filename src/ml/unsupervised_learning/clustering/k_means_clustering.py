@@ -4,6 +4,7 @@ from typing import Optional, Tuple
 from ml.utils._errors_and_warnings._general_error_handling import _ensure_numeric_array, _ensure_no_nan, _ensure_callable
 from ml.metrics_and_evaluations.metrics.metrics import EuclideanDistance
 
+#do note that if a poor distance is chosen, taking the mean will not give good clusters. Thus using Euclidean distance is recommended.
 def kmeans_clustering(
     X,
     k: int,
@@ -55,11 +56,11 @@ def kmeans_clustering(
 
     if epsilon is not None:
         if not isinstance(epsilon, numbers.Real) or epsilon <= 0:
-            raise ValueError(f"epsilon must be > 0, got {epsilon}.")
+            raise ValueError(f"if an epsilon is provideded it must be > 0, got {epsilon}.")
 
     if max_iter is not None:
         if not isinstance(max_iter, int) or max_iter <= 0:
-            raise ValueError(f"max_iter must be a positive integer, got {max_iter}.")
+            raise ValueError(f"if given, max_iter must be a positive integer, got {max_iter}.")
 
     if seed is not None and not isinstance(seed, int):
         raise TypeError("seed must be an integer or None.")
@@ -85,6 +86,7 @@ def kmeans_clustering(
             for c in centroids:
                 d = distance_func(x, c)
                 if not isinstance(d, numbers.Real):
+                    #I leave errors like these because I specifally like noting that It is indeed from the return values.
                     raise TypeError(
                         f"distance_func must return a numeric scalar, got {type(d).__name__}."
                     )

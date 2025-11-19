@@ -2,7 +2,40 @@ import numbers
 import numpy as np
 from typing import Any, Callable, Hashable, Optional, Sequence
 
+
+
 #some error handling functions
+
+
+def _ensure_positive_numeric(value: float, name: str) -> float:
+    """
+    Ensure that a parameter is a positive numeric value.
+
+    Parameters
+    ----------
+    value : float
+        The value to validate.
+    name : str
+        The name of the parameter (for error messages).
+
+    Returns
+    -------
+    float
+        The validated numeric value.
+
+    Raises
+    ------
+    TypeError
+        If the value is not numeric.
+    ValueError
+        If the value is not strictly positive.
+    """
+    if not isinstance(value, numbers.Real):
+        raise TypeError(f"{name} must be a numeric value, got {type(value).__name__}.")
+    if value <= 0:
+        raise ValueError(f"{name} must be a positive number, got {value}.")
+    return value
+
 def _ensure_numeric_array(value, name: str = "array", ndim: int | None = None) -> np.ndarray:
     """
     Convert input to a NumPy array and ensure it contains only numeric values.
@@ -211,59 +244,6 @@ def _ensure_nonzero(value, name: str):
     if np.any(value == 0):
         raise ValueError(f"{name} must not be zero, got {value}.")
     return value
-
-
-
-def _validate_activation(activation, approved=None):
-    """
-    Validate an activation function.
-
-    Parameters
-    ----------
-    activation : str or callable
-        Either the name of a pre-approved activation function
-        or a custom callable.
-    approved : dict, optional
-        Mapping of approved activation names to functions.
-
-    Returns
-    -------
-    callable
-        A validated activation function.
-
-    Raises
-    ------
-    ValueError
-        If activation is not callable or produces invalid output.
-    """
-    if approved is None:
-        approved = {}
-
-    # Case 1: activation is a string
-    if isinstance(activation, str):
-        if activation not in approved:
-            raise ValueError(f"Unsupported activation name: {activation}")
-        return approved[activation]
-
-    # Case 2: activation is a callable
-    if callable(activation):
-        # Test on dummy input
-        test_input = np.array([[0.0, 1.0, -1.0]])
-        try:
-            test_output = activation(test_input)
-        except Exception as e:
-            raise ValueError(f"Custom activation failed on test input: {e}")
-
-        if not isinstance(test_output, np.ndarray):
-            raise ValueError("Custom activation must return a NumPy array.")
-        if test_output.shape != test_input.shape:
-            raise ValueError(
-                f"Custom activation must preserve input shape. Got {test_output.shape}."
-            )
-        return activation
-
-    raise ValueError("Activation must be a string or a callable.")
-
 
 
 def _ensure_same_shape_1d(arr1: np.ndarray, name1: str, arr2: np.ndarray, name2: str) -> None:
