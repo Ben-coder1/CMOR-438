@@ -1,9 +1,5 @@
-from typing import Optional
 import numpy as np
-from pyparsing import Callable
-from ml.metrics_and_evaluations.metrics.metrics import LnDistanceConstructor
 from ml.utils._errors_and_warnings._general_error_handling import InputShapeError, _ensure_callable, _ensure_no_nan, _ensure_numeric_array
-from ml.utils.per_sample import _apply_per_sample
 
 class Loss:
     """
