@@ -109,14 +109,19 @@ def test_mlp_fit_deterministic_manual_weights():
 
 
 def test_mlp_fit_stochastic_moves_weights():
-    X = np.array([[0,0],[1,1]])
-    y = np.array([[1,0],[0,1]])
+    X = np.array([[0, 0], [1, 1]])
+    y = np.array([[1, 0], [0, 1]])
 
     mlp = MultilayerPerceptron(
         layers=[(2, 3, "relu"), (3, 2, "sigmoid")],
         learning_rate=0.1,
         loss_fn="mse"
     )
+
+    # Overwrite weights with "insane" values to make changes obvious
+    for layer in mlp.layers:
+        layer.W = np.full_like(layer.W, 1000.0)   # giant constant weights
+        layer.b = np.full_like(layer.b, -500.0)   # giant negative biases
 
     # Capture initial weights
     initial_weights = [layer.W.copy() for layer in mlp.layers]
@@ -126,7 +131,10 @@ def test_mlp_fit_stochastic_moves_weights():
 
     # Ensure weights have changed
     for init, layer in zip(initial_weights, mlp.layers):
-        assert not np.allclose(init, layer.W)
+        diff = np.linalg.norm(init - layer.W)
+        assert diff > 1e-8, f"Weights did not change, diff={diff}"
+
+
 
 def test_mlp_invalid_loss_string():
     with pytest.raises(ValueError):

@@ -196,25 +196,80 @@ class MultilayerPerceptron:
             self.loss_fn = _validate_loss_fn(loss_fn, APPROVED_LOSSES)
 
     def forward(self, X):
+        """
+        Compute the forward pass through the network.
+
+        Parameters
+        ----------
+        X : ndarray of shape (n_samples, n_features)
+            Input data.
+
+        Returns
+        -------
+        out : ndarray
+            Network output after passing through all layers.
+        """
+
         out = X
         for layer in self.layers:
             out = layer.forward(out)
         return out
 
     def predict(self, X):
-        """Predict class labels for input data."""
+        """
+        Predict class labels for input data.
+
+        Parameters
+        ----------
+        X : ndarray of shape (n_samples, n_features)
+            Input data.
+
+        Returns
+        -------
+        labels : ndarray of shape (n_samples,)
+            Predicted class indices.
+        """
+
         probs = self.forward(X)
         return np.argmax(probs, axis=1)
 
     def fit(self, X, y, epochs=100, verbose=True, stochastic=False, close_enough=None):
-        """Train the network using gradient descent."""
+        """
+        Train the network using gradient descent.
+
+        Parameters
+        ----------
+        X : ndarray of shape (n_samples, n_features)
+            Training input data.
+        y : ndarray of shape (n_samples, n_classes)
+            One-hot encoded target labels.
+        epochs : int, optional
+            Number of training iterations. Default is 100.
+        verbose : bool, optional
+            If True, prints loss updates during training. Default is True.
+        stochastic : bool, optional
+            If True, performs stochastic gradient descent (SGD). Default is False.
+        close_enough : float, optional
+            Early stopping threshold. If the change in loss between epochs
+            is smaller than this value, training stops early.
+
+        Notes
+        -----
+        - Supports both batch gradient descent and stochastic gradient descent.
+        - Early stopping is triggered if `close_enough` is provided and the
+          loss improvement falls below the threshold.
+        """
+
         X = _ensure_numeric_array(X, name="X")
         _ensure_no_nan(X, name="X")
 
         prev_loss = None
         for epoch in range(epochs):
             if stochastic:
-                for i in range(X.shape[0]):
+                indices = np.arange(X.shape[0])
+                np.random.shuffle(indices)
+
+                for i in indices:
                     xi = X[i:i+1]
                     yi = y[i:i+1]
 
@@ -268,6 +323,22 @@ class MultilayerPerceptron:
 
 
     def score(self, X, y):
+        """
+        Compute classification accuracy of the model.
+
+        Parameters
+        ----------
+        X : ndarray of shape (n_samples, n_features)
+            Input data.
+        y : ndarray of shape (n_samples,)
+            True class labels.
+
+        Returns
+        -------
+        accuracy : float
+            Fraction of correctly predicted samples.
+        """
+
         return classification_accuracy(self, X, y)
 
 
