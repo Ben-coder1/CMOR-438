@@ -38,20 +38,31 @@ $$
 
 ```mermaid
 flowchart LR
-    x1(("x₁"))
-    dots["⋮"]
-    xn(("xₙ"))
-    b(("Bias b"))
+    %% Define a style for nodes without borders/backgrounds
+    classDef plain fill:none,stroke:none,shadow:none;
 
+    %% Nodes
+    x1(("x₁"))
+    xn(("xₙ"))
+    b(("b"))
+    
+    %% The ellipsis (⋮) uses the 'plain' style (free-standing)
+    dots["⋮"]:::plain
+
+    %% Processing Unit
     sum(("z = Σ(wᵢxᵢ) + b"))
     
-    y["ŷ = { 1  if  z > 0<br/>      { 0  otherwise"]
+    %% Output formatted as aligned cases, using 'plain' style (no box)
+    y["ŷ = ⎧ 1   if  z > 0<br/>      ⎩ 0   if  z ≤ 0"]:::plain
 
+    %% Connections
     x1 -- "w₁" --> sum
-    dots ~~~ sum
     xn -- "wₙ" --> sum
     b -- "1" --> sum
     sum --> y
+
+    %% Force layout order (Vertical stacking)
+    x1 ~~~ dots ~~~ xn ~~~ b
 ```
 ## Learning Algorithm (Update Rule)
 
