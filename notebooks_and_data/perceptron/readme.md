@@ -34,33 +34,30 @@ $$
 
 ---
 
-## Visual Architecture
+## Visual Diagram
 
 ```mermaid
 flowchart LR
     subgraph Inputs
         x1(("x₁"))
-        x2(("x₂"))
+        dots(("..."))
         xn(("xₙ"))
         b(("Bias b"))
     end
 
     subgraph Processing
-        sum["Weighted Sum<br/>Σ (wᵢxᵢ + b)"]
-        act{"Activation<br/>z > 0?"}
+        sum(("z = Σ(wᵢxᵢ) + b"))
     end
 
     subgraph Output
-        y(("ŷ<br/>True/False"))
+        y["ŷ = <br/>1 if z > 0<br/>0 otherwise"]
     end
 
     x1 -- "w₁" --> sum
-    x2 -- "w₂" --> sum
+    dots -- "..." --> sum
     xn -- "wₙ" --> sum
     b -- "1" --> sum
-    sum --> act
-    act -- "Yes" --> y
-    act -- "No" --> y
+    sum --> y
 ```
 ## Learning Algorithm (Update Rule)
 
