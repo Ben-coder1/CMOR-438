@@ -38,23 +38,17 @@ $$
 
 ```mermaid
 flowchart LR
-    subgraph Inputs
-        x1(("x₁"))
-        dots(("..."))
-        xn(("xₙ"))
-        b(("Bias b"))
-    end
+    x1(("x₁"))
+    dots["⋮"]
+    xn(("xₙ"))
+    b(("Bias b"))
 
-    subgraph Processing
-        sum(("z = Σ(wᵢxᵢ) + b"))
-    end
-
-    subgraph Output
-        y["ŷ = <br/>1 if z > 0<br/>0 otherwise"]
-    end
+    sum(("z = Σ(wᵢxᵢ) + b"))
+    
+    y["ŷ = { 1  if  z > 0<br/>      { 0  otherwise"]
 
     x1 -- "w₁" --> sum
-    dots -- "..." --> sum
+    dots ~~~ sum
     xn -- "wₙ" --> sum
     b -- "1" --> sum
     sum --> y
