@@ -38,22 +38,22 @@ $$
 
 ```mermaid
 flowchart LR
-    %% Define a style for nodes without borders/backgrounds
-    classDef plain fill:none,stroke:none,shadow:none;
+    classDef tikzNode fill:#fff,stroke:#000,stroke-width:1px,color:#000;
+    classDef tikzText fill:none,stroke:none,color:#000;
 
-    %% Nodes
-    x1(("x₁"))
-    xn(("xₙ"))
-    b(("b"))
+    %% Input Nodes
+    x1((x₁)):::tikzNode
+    xn((xₙ)):::tikzNode
+    b((b)):::tikzNode
     
-    %% The ellipsis (⋮) uses the 'plain' style (free-standing)
-    dots["⋮"]:::plain
+    %% Vertical Ellipsis (Invisible background)
+    dots["⋮"]:::tikzText
 
-    %% Processing Unit
-    sum(("z = Σ(wᵢxᵢ) + b"))
+    %% Processing Node (Summation)
+    sum(("z = Σ(wᵢxᵢ) + b")):::tikzNode
     
-    %% Output formatted as aligned cases, using 'plain' style (no box)
-    y["ŷ = ⎧ 1   if  z > 0<br/>      ⎩ 0   if  z ≤ 0"]:::plain
+    %% Output (Math Case Format)
+    y["ŷ = ⎧ 1   if  z > 0<br/>      ⎩ 0   if  z ≤ 0"]:::tikzText
 
     %% Connections
     x1 -- "w₁" --> sum
@@ -61,7 +61,7 @@ flowchart LR
     b -- "1" --> sum
     sum --> y
 
-    %% Force layout order (Vertical stacking)
+    %% Spacing Hack: Invisible links to force vertical alignment of inputs
     x1 ~~~ dots ~~~ xn ~~~ b
 ```
 ## Learning Algorithm (Update Rule)
