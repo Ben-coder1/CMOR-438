@@ -36,20 +36,21 @@ $$
 
 ## Visual Diagram
 
+
 ```mermaid
-flowchart LR
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#ffffff', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'background': '#ffffff'}}}%%
+flowchart TD
+    %% Define Clean TikZ-like Styling
     classDef tikzNode fill:#fff,stroke:#000,stroke-width:1px,color:#000;
-    classDef tikzText fill:none,stroke:none,color:#000;
+    classDef tikzText fill:#fff,stroke:none,color:#000;
 
-    %% Input Nodes
+    %% Input Layer (Horizontally Aligned)
     x1((x₁)):::tikzNode
+    dots["..."]:::tikzText
     xn((xₙ)):::tikzNode
-    b((b)):::tikzNode
-    
-    %% Vertical Ellipsis (Invisible background)
-    dots["⋮"]:::tikzText
+    biasNode((1)):::tikzNode
 
-    %% Processing Node (Summation)
+    %% Processing Unit
     sum(("z = Σ(wᵢxᵢ) + b")):::tikzNode
     
     %% Output (Math Case Format)
@@ -57,12 +58,10 @@ flowchart LR
 
     %% Connections
     x1 -- "w₁" --> sum
+    dots ~~~ sum
     xn -- "wₙ" --> sum
-    b -- "1" --> sum
+    biasNode -- "b" --> sum
     sum --> y
-
-    %% Spacing Hack: Invisible links to force vertical alignment of inputs
-    x1 ~~~ dots ~~~ xn ~~~ b
 ```
 ## Learning Algorithm (Update Rule)
 
