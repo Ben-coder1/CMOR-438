@@ -1,3 +1,4 @@
+import warnings
 import numpy as np
 from ml.metrics_and_evaluations.evaluation.supervised.loss_functions import APPROVED_LOSSES, mean_squared_error
 from ml.metrics_and_evaluations.evaluation.supervised.performance import classification_accuracy
@@ -100,6 +101,17 @@ class DenseLayer:
 
         # Linear transformation + activation
         z = np.dot(X, self.W) + self.b
+        if np.isnan(z).any() or np.isinf(z).any():
+            print("=== DEBUG INFO ===")
+            print("Input X shape:", X.shape)
+            print("Input X sample:", X[:5])   # print first 5 rows
+            print("Weights W shape:", self.W.shape)
+            print("Weights W sample:", self.W[:5, :5])  # print top-left corner
+            print("Bias b shape:", self.b.shape)
+            print("Bias b values:", self.b)
+            raise ValueError("NaN/Inf detected in logits before activation")
+
+
         a = self.activation(z)
 
         # Cache for backprop
@@ -191,9 +203,18 @@ class MultilayerPerceptron:
 
         self.learning_rate = learning_rate
         if loss_fn is None:
-            self.loss_fn = APPROVED_LOSSES["cross_entropy"]
+            self.loss_fn = APPROVED_LOSSES["mse"]
         else:
             self.loss_fn = _validate_loss_fn(loss_fn, APPROVED_LOSSES)
+            
+        final_activation = getattr(self.layers[-1], "activation", None)
+        if final_activation != APPROVED_ACTIVATIONS["softmax"]:
+            warnings.warn(
+                f"Final layer activation is '{final_activation}'. "
+                "For multi-class classification with one-hot labels, "
+                "softmax is typically expected."
+            )
+
 
     def forward(self, X):
         """
@@ -301,6 +322,13 @@ class MultilayerPerceptron:
                     grads_b = np.sum(delta, axis=0, keepdims=True) / X.shape[0]
                     layer.W -= self.learning_rate * grads_W
                     layer.b -= self.learning_rate * grads_b
+
+                    if (np.isnan(grads_W).any() or np.isinf(grads_W).any() or np.isnan(grads_b).any() or np.isinf(grads_b).any()):
+                        raise ValueError(
+                        f"Numerical instability detected at layer {i}: "
+                        f"grads_W or grads_b contains NaN/Inf"
+                        )
+
 
                     if i > 0:
                         prev_z = self.layers[i - 1].last_z

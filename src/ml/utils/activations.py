@@ -119,7 +119,7 @@ class Activation:
                 f"Expected {expected_shape}, got {hold.shape}."
             )
         
-        return _ensure_no_nan(out, name=f"{kind} output")
+        return _ensure_no_nan(out, name=f"{kind} output, function is f{self.name}")
 
     def __repr__(self):
         """
@@ -254,8 +254,56 @@ relu = Activation(_relu, _relu_derivative, name="relu")
 
 
 
+# --- Softmax ---
+def _softmax(z: np.ndarray) -> np.ndarray:
+    """
+    Compute the softmax activation function.
+
+    Parameters
+    ----------
+    z : np.ndarray
+        Input array of shape (n_samples, n_outputs).
+
+    Returns
+    -------
+    np.ndarray
+        Softmax probabilities, same shape as z.
+    """
+    # subtract max for numerical stability
+    shift_z = z - np.max(z, axis=1, keepdims=True)
+    exp_z = np.exp(shift_z)
+    return exp_z / np.sum(exp_z, axis=1, keepdims=True)
+
+
+def _softmax_derivative(z: np.ndarray) -> np.ndarray:
+    """
+    Compute the derivative of the softmax activation function.
+
+    Parameters
+    ----------
+    z : np.ndarray
+        Input array (pre-activation values).
+
+    Returns
+    -------
+    np.ndarray
+        Derivative values. For simplicity, this returns the elementwise
+        form softmax(z) * (1 - softmax(z)), which is correct for the
+        diagonal entries of the Jacobian. In practice, when combined
+        with cross-entropy loss, the gradient simplifies to
+        softmax(z) - y, so you rarely need the full Jacobian.
+    """
+    s = _softmax(z)
+    return s * (1.0 - s)  # diagonal approximation
+
+
+softmax = Activation(_softmax, _softmax_derivative, name="softmax")
+
+
 APPROVED_ACTIVATIONS = {
     "sigmoid": sigmoid,
     "tanh": tanh,
     "relu": relu,
+    "softmax": softmax,
 }
+

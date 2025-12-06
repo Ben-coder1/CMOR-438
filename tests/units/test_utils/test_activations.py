@@ -193,4 +193,44 @@ def test_activation_gradient_returns_non_numeric_error():
         act.gradient(z)
 
 
+def test_softmax_forward_probabilities_sum_to_one():
+    z = np.array([[1.0, 2.0, 3.0],
+                  [0.1, 0.2, 0.3]])
+    out = activations.softmax(z)
+    # Each row should sum to 1
+    row_sums = np.sum(out, axis=1)
+    assert np.allclose(row_sums, np.ones_like(row_sums)), "Softmax outputs must sum to 1"
+    # Shape preserved
+    assert out.shape == z.shape
+
+
+def test_softmax_forward_numerical_stability():
+    z = np.array([[1000.0, 1001.0, 1002.0]])  # large values
+    out = activations.softmax(z)
+    # Should not produce NaNs or infs
+    assert np.all(np.isfinite(out)), "Softmax must be numerically stable"
+    # Still sums to 1
+    assert np.isclose(np.sum(out), 1.0)
+
+
+def test_softmax_derivative_shape_and_values():
+    z = np.array([[1.0, 2.0, 3.0]])
+    grad = activations.softmax.gradient(z)
+    # Shape preserved
+    assert grad.shape == z.shape
+    # Values between 0 and 1
+    assert np.all((grad >= 0) & (grad <= 1)), "Softmax derivative values must be in [0,1]"
+
+
+def test_softmax_in_activation_class_repr_and_call():
+    z = np.array([[0.5, 1.5]])
+    act = activations.softmax(z)
+    grad = activations.softmax.gradient(z)
+    # Check repr
+    assert "softmax" in repr(activations.softmax)
+    # Forward output sums to 1
+    assert np.isclose(np.sum(act), 1.0)
+    # Gradient shape preserved
+    assert grad.shape == z.shape
+
 
