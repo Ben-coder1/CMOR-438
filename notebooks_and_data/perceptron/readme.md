@@ -36,33 +36,7 @@ $$
 
 ## Visual Diagram
 
-
-```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#ffffff', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'background': '#ffffff'}}}%%
-flowchart TD
-    %% Define Clean TikZ-like Styling
-    classDef tikzNode fill:#fff,stroke:#000,stroke-width:1px,color:#000;
-    classDef tikzText fill:#fff,stroke:none,color:#000;
-
-    %% Input Layer (Horizontally Aligned)
-    x1((x₁)):::tikzNode
-    dots["..."]:::tikzText
-    xn((xₙ)):::tikzNode
-    biasNode((1)):::tikzNode
-
-    %% Processing Unit
-    sum(("z = Σ(wᵢxᵢ) + b")):::tikzNode
-    
-    %% Output (Math Case Format)
-    y["ŷ = ⎧ 1   if  z > 0<br/>      ⎩ 0   if  z ≤ 0"]:::tikzText
-
-    %% Connections
-    x1 -- "w₁" --> sum
-    dots ~~~ sum
-    xn -- "wₙ" --> sum
-    biasNode -- "b" --> sum
-    sum --> y
-```
+![Perceptron Architecture Diagram](perceptron_diagram.jpg)
 ## Learning Algorithm (Update Rule)
 
 The perceptron learns by adjusting weights **only** when it makes an incorrect prediction. We use a **Learning Rate** ($\eta$), a small hyperparameter (e.g., 0.01) to control the step size.
@@ -86,7 +60,7 @@ For each training example $(x, y)$, if the prediction $\hat{y} \neq y$:
 ## Critical Limitations 
 
 1.  **Linear Separability (The XOR Problem):**
-    The perceptron can **only** classify data that can be separated by a straight line (or hyperplane). It can solve **AND** or **OR** functions, but it fails completely on **XOR** (exclusive OR) data, which requires non-linear separation.
+    The perceptron is only good at classificatino tasks in which the two classes can generally be seperated by a straight line (or hyperplane). 
 
 2.  **The Curse of Dimensionality:**
     As the number of input features ($x_1 \dots x_n$) increases:
@@ -95,6 +69,18 @@ For each training example $(x, y)$, if the prediction $\hat{y} \neq y$:
 
 3.  **Convergence Issues:**
     If the dataset is not linearly separable, the Perceptron Learning Algorithm (PLA) will **never converge**. It will oscillate endlessly between weights unless a maximum epoch limit is enforced.
+
+## Linearly Seperable Data
+
+Here is an example of linearly seperable data. The perceptron would generally perform well on data like this. It could perform well even if it was not perfectly linearly seperable
+
+![Linearly Seperable Data](linearly_seperable_data.png)
+
+## Not Linearly Seperable Data
+
+Here is an example of data in which their are clearly clusters, but the perceptron would perform very poorly as the classes are not linearly seperated.
+
+![Not Linearly Seperable Data](non_linearly_seperable_data.png)
 
 ---
 
