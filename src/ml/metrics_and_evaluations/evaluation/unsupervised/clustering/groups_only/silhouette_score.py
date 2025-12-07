@@ -5,6 +5,7 @@ import numpy as np
 
 from ml.metrics_and_evaluations.metrics.metrics import EuclideanDistance
 from ml.utils._errors_and_warnings._general_error_handling import _ensure_numeric_array, _ensure_no_nan, _ensure_callable
+from ml.utils.per_sample import _apply_per_sample
 
 
 def compute_silhouette_score(
@@ -34,7 +35,7 @@ def compute_silhouette_score(
     ValueError
         If X and labels lengths mismatch, or fewer than 2 clusters.
     TypeError
-        If distance_func is not callable or does not return numeric.
+        If distance_func is not callable
 
     Examples
     --------
@@ -71,13 +72,27 @@ def compute_silhouette_score(
         other_clusters = [X[labels == lbl] for lbl in unique_labels if lbl != labels[i]]
 
         # a(i): mean intra-cluster distance
-        a = np.mean([distance_func(x, y) for y in same_cluster if not np.array_equal(x, y)] or [0.0])
-        if not isinstance(a, numbers.Real):
-            raise TypeError("distance_func must return numeric values.")
+        intra_distances = _apply_per_sample(
+            distance_func, np.broadcast_to(x, same_cluster.shape), same_cluster
+        )
+        
+        # Standard silhouette definition: mean distance to *other* points (j != i).
+        # Since dist(x, x) is 0, the sum is valid. We simply divide by (N-1) to exclude self.
+        n_same = len(same_cluster)
+        if n_same > 1:
+            a = np.sum(intra_distances) / (n_same - 1)
+        else:
+            a = 0.0
 
         # b(i): min mean distance to other clusters
         b = min(
-            np.mean([distance_func(x, y) for y in cluster]) for cluster in other_clusters if len(cluster) > 0
+            np.mean(
+                _apply_per_sample(
+                    distance_func, np.broadcast_to(x, cluster.shape), cluster
+                )
+            )
+            for cluster in other_clusters
+            if len(cluster) > 0
         )
         if not isinstance(b, numbers.Real):
             raise TypeError("distance_func must return numeric values.")

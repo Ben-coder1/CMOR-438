@@ -25,3 +25,55 @@ When making a new prediction:
 - **Choice of k matters**: Too small a k can lead to noisy predictions; too large a k can oversmooth and ignore local structure.
 
 ---
+
+
+# Functionality
+The **KNN** class provides a strict, numeric-only implementation of the kNN algorithm.  
+Unlike generic implementations, this class enforces homogeneous numeric data for both feature vectors and labels, ensuring type safety and consistency.
+
+---
+
+## Class Interface
+### `KNN(X=None, y=None)`
+Initializes the model. You can store training data (`X`, `y`) during initialization or provide it later during prediction.
+
+---
+
+## Methods
+
+### `predict(target, classify=True, K=5, dist=EuclideanDistance)`
+**Purpose:** Specific prediction for a single target vector.  
+
+**Parameters:**
+- **target**: The input vector to predict.  
+- **classify (bool)**: If `True`, performs classification (majority vote). If `False`, performs regression (average).  
+- **K (int)**: Number of neighbors to consider.  
+
+**Returns:** The predicted label (scalar).
+
+---
+
+### `error(X_test, y_test, classify=True, K=5, ...)`
+**Purpose:** Evaluates the model's performance against a test dataset.  
+
+**Logic:**
+- If `classify=True`: Returns the **Misclassification Rate** (0.0 to 1.0).  
+- If `classify=False`: Returns the **Mean Absolute Error (MAE)**.  
+
+---
+
+### `find_neighbors(target, K=5)`
+**Purpose:** Inspection tool to retrieve the exact neighbors used for a prediction.  
+
+**Returns:**  
+A list of tuples, where each tuple contains:  
+`(neighbor_vector, neighbor_label, distance_to_target)`
+
+---
+
+## Data Constraints & Error Handling
+This implementation includes strict validation logic:
+
+- **Homogeneous Data:** Inputs must be numeric arrays. Ragged lists or mixed types (strings/numbers) are not supported.  
+- **Validation:** Raises `ValueError` if array dimensions mismatch or if `K` exceeds the dataset size.  
+- **Sanitization:** Automatically rejects input containing `NaN` values.

@@ -90,3 +90,49 @@ Here is an example of data in which their are clearly clusters, but the perceptr
 | :--- | :--- | :--- | :--- |
 | **Stochastic** | Updates weights after **each** training example. | Fast convergence; noise helps escape local minima. | Noisy updates lead to a zig-zag path toward the solution. |
 | **Batch** | Updates weights after processing the **entire** dataset. | Stable convergence; smooth error gradient. | Slower per epoch; requires high memory to store gradients. |
+
+
+## Functionality
+
+The implemented `Perceptron` class provides a practical way to train and evaluate a binary classifier. Its key functionalities include:
+
+- **Initialization**
+  - Creates a weight vector `w` of zeros and bias `b = 0.0`.
+  - Accepts `n_features` to define the dimensionality of input data.
+  - Maintains a training history (`history`) and class mapping (`classes_`).
+
+- **Activation**
+  - Computes the linear combination of inputs and weights:
+    \[
+    z = \mathbf{w} \cdot \mathbf{x} + b
+    \]
+  - Used internally for prediction and training updates.
+
+- **Label Encoding/Decoding**
+  - Arbitrary binary labels are mapped to \(\{-1, +1\}\) for training.
+  - Predictions are decoded back to the original labels for user-facing results.
+
+- **Prediction**
+  - Applies the step function to classify inputs:
+    - Returns the original class labels.
+    - Ensures input dimensions match the trained model.
+
+- **Training**
+  - Supports **stochastic** (per-sample) and **batch** (per-epoch) updates.
+  - Parameters:
+    - `lr`: Learning rate (step size).
+    - `epochs`: Number of training iterations.
+    - `seed`: Random seed for reproducibility.
+    - `verbose`: Prints accuracy per epoch if enabled.
+    - `stochastic` and `shuffle`: Control update style and data order.
+  - Updates weights and bias only when predictions are incorrect.
+  - Tracks accuracy after each epoch in `history`.
+
+- **Evaluation**
+  - Provides a `score` method that computes classification accuracy using external utilities.
+
+- **Reset**
+  - Reinitializes weights, bias, RNG, and clears training history.
+  - Useful for restarting experiments with different seeds.
+
+---

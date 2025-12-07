@@ -14,7 +14,45 @@ def kmeans_clustering(
     distance_func: Optional[callable] = None,
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
-    Perform K-means clustering.
+    Perform K-means clustering on a numeric dataset.
+
+    Parameters
+    ----------
+    X : array_like of shape (n_samples, n_features)
+        Input data. Must be a 2D numeric array with no NaN values.
+    k : int
+        Number of clusters to form. Must be >= 2 and <= n_samples.
+    epsilon : float, optional
+        Convergence threshold. If provided, the algorithm stops when the
+        centroid shift between iterations is less than epsilon.
+        Must be > 0. Either `epsilon` or `max_iter` must be provided.
+    max_iter : int, optional
+        Maximum number of iterations. If provided, the algorithm stops
+        after this many iterations even if convergence has not been reached.
+        Must be > 0. Either `epsilon` or `max_iter` must be provided.
+    seed : int, optional
+        Random seed for centroid initialization. Ensures reproducibility.
+    distance_func : callable, optional
+        Custom distance function. Must accept two vectors and return a numeric scalar.
+        Defaults to Euclidean distance if not provided.
+
+    Returns
+    -------
+    centroids : np.ndarray of shape (k, n_features)
+        Final centroid positions for each cluster.
+    labels : np.ndarray of shape (n_samples,)
+        Cluster assignment for each input sample. Values range from 0 to k-1.
+
+    Raises
+    ------
+    ValueError
+        - If k < 2 or k > n_samples.
+        - If epsilon <= 0 or max_iter <= 0.
+        - If neither epsilon nor max_iter is provided.
+    TypeError
+        - If seed is not an integer or None.
+        - If distance_func is not callable or does not return a numeric scalar.
+
 
     Examples
     --------

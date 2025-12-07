@@ -152,4 +152,43 @@ While MLPs can be used for **regression** (predicting continuous values) by usin
 - **Forward Pass:** Data flows input → hidden → output to generate a prediction  
 - **Backpropagation:** Error flows output → hidden → input. This uses the Chain Rule to efficiently compute how much each weight contributed to the error  
 - **Activation Functions:** Essential for learning nonlinear complex patterns (ReLU for hidden layers, SoftMax for output)  
-- **Scope:** This implementation supports multi-class classification but not regression
+
+
+## Functionality of Implementation
+
+The **Multilayer Perceptron (MLP)** implementation provides a flexible framework for building and training dense neural networks for classification. 
+
+### Model Construction
+- **Layer Specification**
+  - Accepts either pre-built `DenseLayer` instances or tuples describing layer parameters.
+  - Each layer can be configured with input size, output size, and activation function.
+- **Customizable Loss Functions**
+  - Supports pluggable loss functions.
+  - Defaults to **Negative Log Likelihood** for classification tasks.
+  - Allows user-defined loss functions for specialized use cases.
+
+### Training
+- **Gradient Descent Optimization**
+  - Updates weights using backpropagation and gradient descent.
+  - Configurable learning rate for fine-tuning convergence speed.
+- **Training Modes**
+  - **Batch Gradient Descent**: Updates weights after processing the entire dataset.
+  - **Stochastic Gradient Descent (SGD)**: Updates weights after each sample for faster, noisier learning.
+- **Early Stopping**
+  - Optional `close_enough` threshold halts training when loss improvement becomes negligible.
+
+### Prediction
+- **Forward Pass**
+  - Computes outputs by propagating inputs through all layers.
+  - Uses **SoftMax** in the final layer to produce class probabilities.
+- **Label Selection**
+  - Returns predicted class indices based on the highest probability.
+  - Always outputs multiple probabilities, even for binary classification.
+
+### Practical Features
+- **Verbose Mode**
+  - Optionally prints loss updates during training for monitoring progress.
+- **Caching**
+  - Stores intermediate values (`last_input`, `last_z`) for efficient backpropagation.
+- **Extensibility**
+  - Modular design allows integration of custom activations, loss functions, or additional layers.
