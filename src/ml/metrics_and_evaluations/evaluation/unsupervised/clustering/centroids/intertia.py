@@ -60,6 +60,13 @@ def compute_inertia(
 
     if len(X) != len(labels):
         raise ValueError("X and labels must have the same length.")
+    valid_indices = set(range(len(centroids)))
+    invalid_labels = set(labels) - valid_indices
+    if invalid_labels:
+        raise ValueError(
+            f"labels contain indices not present in centroids: {sorted(invalid_labels)}"
+        )
+
 
     inertia = 0.0
     for i, x in enumerate(X):

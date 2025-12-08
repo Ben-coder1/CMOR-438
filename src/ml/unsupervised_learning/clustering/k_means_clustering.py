@@ -4,6 +4,7 @@ from typing import Optional, Tuple
 from ml.utils._errors_and_warnings._general_error_handling import _ensure_numeric_array, _ensure_no_nan, _ensure_callable
 from ml.metrics_and_evaluations.metrics.metrics import EuclideanDistance
 
+#do note that if a poor distance is chosen, taking the mean will not give good clusters. Thus using Euclidean distance is recommended.
 def kmeans_clustering(
     X,
     k: int,
@@ -13,7 +14,45 @@ def kmeans_clustering(
     distance_func: Optional[callable] = None,
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
-    Perform K-means clustering.
+    Perform K-means clustering on a numeric dataset.
+
+    Parameters
+    ----------
+    X : array_like of shape (n_samples, n_features)
+        Input data. Must be a 2D numeric array with no NaN values.
+    k : int
+        Number of clusters to form. Must be >= 2 and <= n_samples.
+    epsilon : float, optional
+        Convergence threshold. If provided, the algorithm stops when the
+        centroid shift between iterations is less than epsilon.
+        Must be > 0. Either `epsilon` or `max_iter` must be provided.
+    max_iter : int, optional
+        Maximum number of iterations. If provided, the algorithm stops
+        after this many iterations even if convergence has not been reached.
+        Must be > 0. Either `epsilon` or `max_iter` must be provided.
+    seed : int, optional
+        Random seed for centroid initialization. Ensures reproducibility.
+    distance_func : callable, optional
+        Custom distance function. Must accept two vectors and return a numeric scalar.
+        Defaults to Euclidean distance if not provided.
+
+    Returns
+    -------
+    centroids : np.ndarray of shape (k, n_features)
+        Final centroid positions for each cluster.
+    labels : np.ndarray of shape (n_samples,)
+        Cluster assignment for each input sample. Values range from 0 to k-1.
+
+    Raises
+    ------
+    ValueError
+        - If k < 2 or k > n_samples.
+        - If epsilon <= 0 or max_iter <= 0.
+        - If neither epsilon nor max_iter is provided.
+    TypeError
+        - If seed is not an integer or None.
+        - If distance_func is not callable or does not return a numeric scalar.
+
 
     Examples
     --------
@@ -55,11 +94,11 @@ def kmeans_clustering(
 
     if epsilon is not None:
         if not isinstance(epsilon, numbers.Real) or epsilon <= 0:
-            raise ValueError(f"epsilon must be > 0, got {epsilon}.")
+            raise ValueError(f"if an epsilon is provideded it must be > 0, got {epsilon}.")
 
     if max_iter is not None:
         if not isinstance(max_iter, int) or max_iter <= 0:
-            raise ValueError(f"max_iter must be a positive integer, got {max_iter}.")
+            raise ValueError(f"if given, max_iter must be a positive integer, got {max_iter}.")
 
     if seed is not None and not isinstance(seed, int):
         raise TypeError("seed must be an integer or None.")
@@ -85,6 +124,7 @@ def kmeans_clustering(
             for c in centroids:
                 d = distance_func(x, c)
                 if not isinstance(d, numbers.Real):
+                    #I leave errors like these because I specifally like noting that It is indeed from the return values.
                     raise TypeError(
                         f"distance_func must return a numeric scalar, got {type(d).__name__}."
                     )

@@ -3,7 +3,6 @@ import numpy as np
 from ml.metrics_and_evaluations.metrics.metrics import EuclideanDistance
 from ml.post_processing.label_post_processing import majorityLabel, averageLabel
 from ml.utils._errors_and_warnings._general_error_handling import _ensure_numeric_array, _ensure_no_nan, _ensure_callable, _ensure_positive_int, _ensure_same_length
-from ml.metrics_and_evaluations.evaluation.supervised.performance import classification_accuracy, mean_absolute_error
 
 class KNN:
     """

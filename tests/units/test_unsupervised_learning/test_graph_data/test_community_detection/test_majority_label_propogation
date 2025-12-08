@@ -1,0 +1,211 @@
+
+import pytest
+import networkx as nx
+import warnings
+# We import the private function specifically for unit testing
+from ml.unsupervised_learning.graph_data.community_detection.majority_label_propogation import (
+    majority_label_propagation, _check_graph_simplicity
+)
+
+# --- Direct Unit Tests for _check_graph_simplicity ---
+
+def test_check_simplicity_warns_on_self_loops():
+    """
+    Directly tests the helper function. 
+    Should return False and trigger a UserWarning if self-loops exist.
+    """
+    G = nx.Graph()
+    G.add_edge(1, 1) # Self-loop
+    
+    # Assert a UserWarning is raised (ignoring the specific message)
+    with pytest.warns(UserWarning):
+        result = _check_graph_simplicity(G)
+        
+    assert result is False
+
+def test_check_simplicity_warns_on_multigraph():
+    """
+    Directly tests the helper function.
+    Should return False and trigger a UserWarning if it is a MultiGraph.
+    """
+    G = nx.MultiGraph()
+    G.add_edge(1, 2)
+    
+    # Assert a UserWarning is raised
+    with pytest.warns(UserWarning):
+        result = _check_graph_simplicity(G)
+        
+    assert result is False
+
+def test_check_simplicity_clean_graph(recwarn):
+    """
+    Directly tests the helper function on a valid graph.
+    Should return True and trigger NO warnings.
+    """
+    G = nx.Graph()
+    G.add_edge(1, 2)
+    
+    # recwarn is a built-in pytest fixture that records warnings
+    result = _check_graph_simplicity(G)
+    
+    assert result is True
+    assert len(recwarn) == 0  # Verify no warnings were recorded
+
+# --- Integration Tests (via main function) ---
+
+def test_main_function_triggers_warning_integration():
+    """
+    Ensures the main function actually calls the check and bubbles up the warning.
+    """
+    G = nx.Graph()
+    G.add_edge(1, 1) # Self-loop
+    
+    with pytest.warns(UserWarning):
+        majority_label_propagation(G)
+
+def test_main_function_no_warning_integration(recwarn):
+    """
+    Ensures the main function runs silent on a good graph.
+    """
+    G = nx.Graph()
+    G.add_edge(1, 2)
+    G.nodes[1]['label'] = 'A'
+    
+    majority_label_propagation(G)
+    
+    assert len(recwarn) == 0
+
+
+# --- Input Validation Tests ---
+
+def test_raises_type_error_for_invalid_graph():
+    """Should raise TypeError if input is not a NetworkX graph."""
+    with pytest.raises(TypeError, match="Input must be a NetworkX Graph"):
+        majority_label_propagation("Not a graph", label_attr='label')
+
+def test_raises_value_error_for_invalid_max_iter():
+    """Should raise ValueError if max_iter is less than 1."""
+    G = nx.Graph()
+    with pytest.raises(ValueError, match="max_iter must be a positive integer"):
+        majority_label_propagation(G, max_iter=0)
+
+# --- Warning Tests ---
+
+def test_warns_on_self_loops():
+    """Should issue a UserWarning if the graph contains self-loops."""
+    G = nx.Graph()
+    G.add_edge(1, 1) # Self-loop
+    G.add_edge(1, 2)
+    
+    with pytest.warns(UserWarning, match="Graph contains self-loops"):
+        majority_label_propagation(G)
+
+def test_warns_on_multigraph():
+    """Should issue a UserWarning if the graph is a MultiGraph."""
+    G = nx.MultiGraph()
+    G.add_edge(1, 2)
+    
+    with pytest.warns(UserWarning, match="Graph is a MultiGraph"):
+        majority_label_propagation(G)
+
+# --- Functionality Tests ---
+
+def test_simple_propagation():
+    """
+    Scenario: Node 1 is 'Red', connected to Node 2 (Unlabeled).
+    Expected: Node 2 becomes 'Red'.
+    """
+    G = nx.Graph()
+    G.add_edge(1, 2)
+    G.nodes[1]['label'] = 'Red'
+    
+    G = majority_label_propagation(G, label_attr='label')
+    
+    assert G.nodes[2]['label'] == 'Red'
+
+def test_disconnected_components():
+    """
+    Scenario: Two separate components.
+    Comp A: 1('Red') -- 2
+    Comp B: 3('Blue') -- 4
+    Expected: 2 becomes 'Red', 4 becomes 'Blue'. Labels shouldn't mix.
+    """
+    G = nx.Graph()
+    # Component 1
+    G.add_edge(1, 2)
+    G.nodes[1]['tag'] = 'Red' # Using custom attr name 'tag'
+    
+    # Component 2
+    G.add_edge(3, 4)
+    G.nodes[3]['tag'] = 'Blue'
+    
+    G = majority_label_propagation(G, label_attr='tag')
+    
+    assert G.nodes[2]['tag'] == 'Red'
+    assert G.nodes[4]['tag'] == 'Blue'
+
+def test_freeze_seeds_true():
+    """
+    Scenario: Freeze enabled. 
+    Node 1 ('Red') connected to Node 2 ('Blue').
+    Expected: Neither changes, because they are seeds and freeze=True.
+    """
+    G = nx.Graph()
+    G.add_edge(1, 2)
+    G.nodes[1]['label'] = 'Red'
+    G.nodes[2]['label'] = 'Blue'
+    
+    G = majority_label_propagation(G, freeze_seeds=True)
+    
+    assert G.nodes[1]['label'] == 'Red'
+    assert G.nodes[2]['label'] == 'Blue'
+
+def test_freeze_seeds_false():
+    """
+    Scenario: Freeze disabled (Community Detection mode).
+    Node 0 ('Blue') is surrounded by 3 'Red' neighbors.
+    Expected: Node 0 changes to 'Red' via majority vote.
+    """
+    G = nx.Graph()
+    # Central node 0 is Blue
+    G.add_node(0, label='Blue')
+    
+    # 3 Neighbors are Red
+    for i in range(1, 4):
+        G.add_edge(0, i)
+        G.nodes[i]['label'] = 'Red'
+        
+    # Run with freeze_seeds=False, so Node 0 can change
+    G = majority_label_propagation(G, freeze_seeds=False)
+    
+    assert G.nodes[0]['label'] == 'Red'
+
+def test_no_seeds_no_change():
+    """
+    Scenario: A graph with edges but no initial labels.
+    Expected: No labels are created from thin air.
+    """
+    G = nx.Graph()
+    G.add_edge(1, 2)
+    G.add_edge(2, 3)
+    
+    G = majority_label_propagation(G, label_attr='label')
+    
+    # Check that no 'label' attribute was added
+    for n in G.nodes():
+        assert 'label' not in G.nodes[n]
+
+def test_bridge_tie_breaking():
+    """
+    Scenario: 1('A') -- 2 -- 3('B')
+    Node 2 has exactly one neighbor 'A' and one neighbor 'B'.
+    Expected: Node 2 becomes either 'A' or 'B'.
+    """
+    G = nx.Graph()
+    G.add_edges_from([(1, 2), (2, 3)])
+    G.nodes[1]['label'] = 'A'
+    G.nodes[3]['label'] = 'B'
+    
+    G = majority_label_propagation(G)
+    
+    assert G.nodes[2]['label'] in ['A', 'B']

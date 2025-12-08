@@ -267,3 +267,76 @@ def test_unicode_characters():
     # Should still work for valid Unicode characters
     assert ascii_word_dist("a", "ñ") == abs(ord("a") - ord("ñ"))
 
+
+
+#taxicab tests
+def assert_raises(exc_type, callable_obj, *args, **kwargs):
+    try:
+        callable_obj(*args, **kwargs)
+    except Exception as e:
+        assert isinstance(e, exc_type), f"Expected {exc_type}, got {type(e)}"
+    else:
+        raise AssertionError(f"Expected {exc_type} to be raised but no exception was raised")
+
+# ---- Taxicab (Manhattan) distance tests ----
+
+def test_taxicab_basic():
+    a = np.array([1, 2])
+    b = np.array([4, 6])
+    assert taxicab_distance(a, b) == 7
+    # also works with lists
+    assert taxicab_distance([1, 2], [4, 6]) == 7
+
+def test_raises_on_none_inputs():
+    assert_raises(ValueError, taxicab_distance, None, np.array([1, 2, 3]))
+    assert_raises(ValueError, taxicab_distance, np.array([1, 2, 3]), None)
+
+def test_raises_on_empty_vectors():
+    assert_raises(ValueError, taxicab_distance, np.array([]), np.array([1]))
+    assert_raises(ValueError, taxicab_distance, np.array([1]), np.array([]))
+
+def test_raises_on_length_mismatch():
+    assert_raises(ValueError, taxicab_distance, np.array([1, 2]), np.array([1, 2, 3]))
+
+def test_raises_on_non_numeric_elements():
+    # object dtype arrays with non-numeric entries
+    assert_raises(TypeError, taxicab_distance,
+                  np.array([1, 2, "three"], dtype=object),
+                  np.array([1, 2, 3], dtype=object))
+    assert_raises(TypeError, taxicab_distance,
+                  np.array([1, object()], dtype=object),
+                  np.array([1, 2], dtype=object))
+
+def test_basic_positive_distance():
+    assert taxicab_distance(np.array([1, 2]), np.array([4, 6])) == 7
+
+def test_positives():
+    assert taxicab_distance(np.array([0, 1, 2]), np.array([1, 2, 3])) == 3
+
+def test_negatives():
+    assert taxicab_distance(np.array([-1, -2, -3]), np.array([-4, -5, -6])) == 9
+
+def test_mixed_signs():
+    assert taxicab_distance(np.array([-1, 2, -3]), np.array([4, -2, 3])) == 15
+
+def test_with_floats():
+    result = taxicab_distance(np.array([0.5, 1.25, -2.75]),
+                              np.array([1.5, -0.25, -1.75]))
+    assert abs(result - 3.5) <= 1e-12
+
+def test_large_numbers():
+    a = np.array([10**18, -(10**18), 10**18])
+    b = np.array([-(10**18), 10**18, 0])
+    expected = 5 * 10**18
+    assert taxicab_distance(a, b) == expected
+
+def test_large_vector_correctness():
+    n = 50_000
+    v1 = np.arange(n)
+    v2 = np.arange(n - 1, -1, -1)
+    expected = np.sum(np.abs(v1 - v2))
+    assert taxicab_distance(v1, v2) == expected
+
+def test_identity_zero_distance():
+    v = np.array([0, -1.5, 2, 3.25])
+    assert taxicab_distance(v, v) == 0

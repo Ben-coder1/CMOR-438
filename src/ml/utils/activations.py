@@ -1,177 +1,145 @@
-"""
-Activation functions for neural networks and machine learning models.
-
-Each activation validates its input using centralized error-handling utilities:
-- `_ensure_numeric_array`: ensures the input is a NumPy numeric array.
-- `_ensure_no_nan`: ensures the input contains no NaN values.
-
-Raises
-------
-ValueError
-    If NaN values are present in the input.
-InputShapeError
-    If the input shape is invalid (e.g., softmax requires 1D or 2D input).
-"""
-
 import numpy as np
-from ml.utils._errors_and_warnings._general_error_handling import (
-    _ensure_numeric_array,
-    _ensure_no_nan,
-    InputShapeError,
-)
 
+from ml.utils._errors_and_warnings._general_error_handling import _ensure_numeric_array, _ensure_no_nan
 
-def sigmoid(z: np.ndarray) -> np.ndarray:
+class Activation:
     """
-    Sigmoid activation function.
+    Encapsulates an activation function and its derivative,
+    with validation to ensure numeric outputs.
 
-    Maps real-valued inputs to the range (0, 1).
-    Uses a numerically stable implementation to avoid overflow.
-
-    Parameters
-    ----------
-    z : np.ndarray
-        Input array of any shape.
-
-    Returns
-    -------
-    np.ndarray
-        Array of same shape as input, with values in (0, 1).
-
-    Raises
-    ------
-    ValueError
-        If input contains NaN values.
-
-    Examples
-    --------
-    >>> sigmoid(np.array([-10.0, 0.0, 10.0]))
-    array([4.53978687e-05, 5.00000000e-01, 9.99954602e-01])
+    Activation functions are applied after the linear transformation
+    in neural networks. This class provides:
+      - A callable interface for applying the activation.
+      - A method for computing its derivative.
+      - Validation to ensure outputs are numeric and shape-preserving.
     """
-    arr = _ensure_numeric_array(z, name="z")
-    _ensure_no_nan(arr, name="z")
-
-    # Numerically stable computation
-    out = np.empty_like(arr)
-    pos = arr >= 0
-    neg = ~pos
-    out[pos] = 1.0 / (1.0 + np.exp(-arr[pos]))
-    expz = np.exp(arr[neg])
-    out[neg] = expz / (1.0 + expz)
-    return out
 
 
-def softmax(z: np.ndarray) -> np.ndarray:
+    def __init__(self, func, deriv, name=None):
+        """
+        Initialize an Activation object.
+
+        Parameters
+        ----------
+        func : callable
+            The activation function, mapping ndarray -> ndarray.
+        deriv : callable
+            The derivative of the activation function, mapping ndarray -> ndarray.
+        name : str, optional
+            A human-readable name for the activation. Defaults to func.__name__.
+        """
+
+        self.func = func
+        self.deriv = deriv
+        self.name = name or func.__name__
+
+    def __call__(self, z):
+        """
+        Apply the activation function to input values.
+
+        Parameters
+        ----------
+        z : np.ndarray
+            Pre-activation values (linear transformation outputs).
+
+        Returns
+        -------
+        np.ndarray
+            Activation outputs, same shape as `z`.
+
+        Raises
+        ------
+        ValueError
+            If the output is not numeric or does not preserve input shape.
+        """
+
+        arr = _ensure_numeric_array(z, name="z")
+        _ensure_no_nan(arr, name="z")
+        out = self.func(arr)
+        return self._validate_output(out, arr.shape, "activation")
+        
+
+    def gradient(self, z):
+        """
+        Compute the derivative of the activation function
+        with respect to pre-activation values.
+
+        Parameters
+        ----------
+        z : np.ndarray
+            Pre-activation values.
+
+        Returns
+        -------
+        np.ndarray
+            Derivative values, same shape as `z`.
+
+        Notes
+        -----
+        Custom derivatives must follow the convention of being defined
+        with respect to the pre-activation input `z`.
+        """
+
+
+        arr = _ensure_numeric_array(z, name="z")
+        _ensure_no_nan(arr, name="z")
+        grad = self.deriv(arr)
+        return self._validate_output(grad, arr.shape, "derivative")
+        
+
+    def _validate_output(self, out, expected_shape, kind):
+        """
+        Validate that an activation or derivative output is numeric,
+        contains no NaNs, and preserves input shape.
+
+        Parameters
+        ----------
+        out : np.ndarray
+            Output array to validate.
+        expected_shape : tuple
+            Expected shape of the output.
+        kind : str
+            Description of the output type ("activation" or "derivative").
+
+        Returns
+        -------
+        np.ndarray
+            Validated output array.
+
+        Raises
+        ------
+        ValueError
+            If the output shape does not match the expected shape.
+        """
+
+        hold = _ensure_numeric_array(out, name=f"{kind} output")
+        if hold.shape != expected_shape:
+            raise ValueError(
+                f"{kind.capitalize()} must preserve input shape. "
+                f"Expected {expected_shape}, got {hold.shape}."
+            )
+        
+        return _ensure_no_nan(out, name=f"{kind} output, function is f{self.name}")
+
+    def __repr__(self):
+        """
+        Return a string representation of the Activation object.
+
+        Returns
+        -------
+        str
+            Representation including the activation name.
+        """
+
+        return f"Activation(name={self.name})"
+
+
+
+# --- Sigmoid with error checks ---
+
+def _sigmoid(z: np.ndarray) -> np.ndarray:
     """
-    Softmax activation function.
-
-    Converts raw scores into probabilities that sum to 1 across classes.
-    Uses a numerically stable implementation by subtracting the row max.
-
-    Parameters
-    ----------
-    z : np.ndarray
-        Input array of shape (n_classes,) or (n_samples, n_classes).
-
-    Returns
-    -------
-    np.ndarray
-        Probabilities of same shape, rows summing to 1.
-
-    Raises
-    ------
-    ValueError
-        If input contains NaN values.
-    InputShapeError
-        If input is not 1D or 2D.
-
-    Examples
-    --------
-    >>> softmax(np.array([1.0, 2.0, 3.0]))
-    array([[0.09003057, 0.24472847, 0.66524096]])
-    """
-    arr = _ensure_numeric_array(z, name="z")
-    _ensure_no_nan(arr, name="z")
-
-    # Ensure correct shape
-    if arr.ndim == 1:
-        arr = arr.reshape(1, -1)
-    elif arr.ndim != 2:
-        raise InputShapeError("softmax input must be 1D or 2D.")
-
-    # Stability trick: subtract max per row
-    arr = arr - np.max(arr, axis=1, keepdims=True)
-    expz = np.exp(arr)
-    return expz / np.sum(expz, axis=1, keepdims=True)
-
-
-def relu(z: np.ndarray) -> np.ndarray:
-    """
-    Rectified Linear Unit (ReLU).
-
-    Maps negative inputs to 0, positive inputs unchanged.
-
-    Parameters
-    ----------
-    z : np.ndarray
-        Input array.
-
-    Returns
-    -------
-    np.ndarray
-        Elementwise max(0, z).
-
-    Raises
-    ------
-    ValueError
-        If input contains NaN values.
-
-    Examples
-    --------
-    >>> relu(np.array([-2.0, -0.5, 0.0, 1.5]))
-    array([0. , 0. , 0. , 1.5])
-    """
-    arr = _ensure_numeric_array(z, name="z")
-    _ensure_no_nan(arr, name="z")
-    return np.maximum(0.0, arr)
-
-
-def tanh(z: np.ndarray) -> np.ndarray:
-    """
-    Hyperbolic tangent activation.
-
-    Maps real-valued inputs to (-1, 1).
-
-    Parameters
-    ----------
-    z : np.ndarray
-        Input array.
-
-    Returns
-    -------
-    np.ndarray
-        Array of same shape, values in (-1, 1).
-
-    Raises
-    ------
-    ValueError
-        If input contains NaN values.
-
-    Examples
-    --------
-    >>> tanh(np.array([-2.0, 0.0, 2.0]))
-    array([-0.96402758,  0.        ,  0.96402758])
-    """
-    arr = _ensure_numeric_array(z, name="z")
-    _ensure_no_nan(arr, name="z")
-    return np.tanh(arr)
-
-
-def step(z: np.ndarray) -> np.ndarray:
-    """
-    Heaviside step function.
-
-    Outputs 0 for negative inputs, 1 for non-negative inputs.
+    Compute the sigmoid activation function.
 
     Parameters
     ----------
@@ -181,18 +149,161 @@ def step(z: np.ndarray) -> np.ndarray:
     Returns
     -------
     np.ndarray
-        Array of 0s and 1s.
-
-    Raises
-    ------
-    ValueError
-        If input contains NaN values.
-
-    Examples
-    --------
-    >>> step(np.array([-1.0, 0.0, 2.0]))
-    array([0., 1., 1.])
+        Element-wise sigmoid values in (0, 1).
     """
-    arr = _ensure_numeric_array(z, name="z")
-    _ensure_no_nan(arr, name="z")
-    return (arr >= 0).astype(float)
+
+    return 1.0 / (1.0 + np.exp(-z))
+
+def _sigmoid_derivative(z: np.ndarray) -> np.ndarray:
+    """
+    Compute the derivative of the sigmoid activation function.
+
+    Parameters
+    ----------
+    z : np.ndarray
+        Input array (pre-activation values).
+
+    Returns
+    -------
+    np.ndarray
+        Element-wise derivative values.
+    """
+
+    sig = _sigmoid(z)
+    return sig * (1.0 - sig)
+
+sigmoid = Activation(_sigmoid, _sigmoid_derivative, name="sigmoid")
+
+
+# --- Tanh ---
+
+def _tanh(z: np.ndarray) -> np.ndarray:
+    """
+    Compute the hyperbolic tangent activation function.
+
+    Parameters
+    ----------
+    z : np.ndarray
+        Input array.
+
+    Returns
+    -------
+    np.ndarray
+        Element-wise tanh values in (-1, 1).
+    """
+
+    return np.tanh(z)
+
+def _tanh_derivative(z: np.ndarray) -> np.ndarray:
+    """
+    Compute the derivative of the tanh activation function.
+
+    Parameters
+    ----------
+    z : np.ndarray
+        Input array (pre-activation values).
+
+    Returns
+    -------
+    np.ndarray
+        Element-wise derivative values.
+    """
+
+    return 1.0 - np.tanh(z) ** 2
+
+tanh = Activation(_tanh, _tanh_derivative, name="tanh")
+
+
+# --- ReLU ---
+
+def _relu(z: np.ndarray) -> np.ndarray:
+    """
+    Compute the Rectified Linear Unit (ReLU) activation function.
+
+    Parameters
+    ----------
+    z : np.ndarray
+        Input array.
+
+    Returns
+    -------
+    np.ndarray
+        Element-wise ReLU values: max(0, z).
+    """
+
+    return np.maximum(0, z)
+
+def _relu_derivative(z: np.ndarray) -> np.ndarray:
+    """
+    Compute the derivative of the ReLU activation function.
+
+    Parameters
+    ----------
+    z : np.ndarray
+        Input array (pre-activation values).
+
+    Returns
+    -------
+    np.ndarray
+        Element-wise derivative values: 1 if z > 0, else 0.
+    """
+
+    return (z > 0).astype(float)
+
+relu = Activation(_relu, _relu_derivative, name="relu")
+
+
+
+# --- Softmax ---
+def _softmax(z: np.ndarray) -> np.ndarray:
+    """
+    Compute the softmax activation function.
+
+    Parameters
+    ----------
+    z : np.ndarray
+        Input array of shape (n_samples, n_outputs).
+
+    Returns
+    -------
+    np.ndarray
+        Softmax probabilities, same shape as z.
+    """
+    # subtract max for numerical stability
+    shift_z = z - np.max(z, axis=1, keepdims=True)
+    exp_z = np.exp(shift_z)
+    return exp_z / np.sum(exp_z, axis=1, keepdims=True)
+
+
+def _softmax_derivative(z: np.ndarray) -> np.ndarray:
+    """
+    Compute the derivative of the softmax activation function.
+
+    Parameters
+    ----------
+    z : np.ndarray
+        Input array (pre-activation values).
+
+    Returns
+    -------
+    np.ndarray
+        Derivative values. For simplicity, this returns the elementwise
+        form softmax(z) * (1 - softmax(z)), which is correct for the
+        diagonal entries of the Jacobian. In practice, when combined
+        with cross-entropy loss, the gradient simplifies to
+        softmax(z) - y, so you rarely need the full Jacobian.
+    """
+    s = _softmax(z)
+    return s * (1.0 - s)  # diagonal approximation
+
+
+softmax = Activation(_softmax, _softmax_derivative, name="softmax")
+
+
+APPROVED_ACTIVATIONS = {
+    "sigmoid": sigmoid,
+    "tanh": tanh,
+    "relu": relu,
+    "softmax": softmax,
+}
+

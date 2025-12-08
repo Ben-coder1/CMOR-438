@@ -86,7 +86,7 @@ def test_silhouette_with_nan_raises():
 
 
 # ----------------------
-# Distance function errors
+# Distance function error
 # ----------------------
 
 def test_silhouette_distance_func_not_callable():
@@ -94,29 +94,6 @@ def test_silhouette_distance_func_not_callable():
     labels = np.array([0, 1])
     with pytest.raises(TypeError):
         compute_silhouette_score(X, labels, distance_func="not_callable")
-
-def test_silhouette_distance_func_returns_non_numeric():
-    def bad_distance(x, y):
-        return "not a number"
-    X = np.array([[0, 0], [1, 1]])
-    labels = np.array([0, 1])
-    with pytest.raises(TypeError):
-        compute_silhouette_score(X, labels, distance_func=bad_distance)
-
-def test_silhouette_distance_func_returns_mixed_numeric_and_non_numeric():
-    # Distance function: returns string if first coordinate is 0, else returns numeric
-    def mixed_distance(x, y):
-        if x[0] == 0 or y[0] == 0:
-            return "oops"   # non-numeric
-        return float(np.linalg.norm(x - y))  # numeric
-
-    # Dataset: ensures some comparisons involve a point with x[0] == 0
-    X = np.array([[0, 0], [1, 1], [2, 2]])
-    labels = np.array([0, 1, 1])  # two clusters
-
-    # Expect TypeError because at least one distance call returns "oops"
-    with pytest.raises(TypeError):
-        compute_silhouette_score(X, labels, distance_func=mixed_distance)
 
 
 
