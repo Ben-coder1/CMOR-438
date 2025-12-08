@@ -29,7 +29,7 @@ The algorithm is purely mathematical and requires no iterative training. It foll
    - **Eigenvectors** point in the directions where the data is most spread out.  
    - **Eigenvalues** tell us how much information (variance) that direction holds.
 4. **Sorting:** The components are ranked by their eigenvalues. The top component captures the most variance, the second captures the second most, and so on.
-5. **Projection:** The original data is multiplied by the top \( k \) eigenvectors to transform it into the new, lower-dimensional space.
+5. **Projection:** The original data is multiplied by the top $ k $ eigenvectors to transform it into the new, lower-dimensional space.
 
 ## 🛠 This Implementation
 

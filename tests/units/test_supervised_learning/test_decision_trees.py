@@ -1,7 +1,161 @@
 import pytest
 import numpy as np
-from ml.supervised_learning.decision_trees import DecisionTree, entropy, gini
+from ml.supervised_learning.decision_trees import BaseDecisionTree, DecisionTree, entropy, gini, Node
 from ml.utils._errors_and_warnings._general_error_handling import InputShapeError
+
+
+#node tests
+
+def test_node_initialization_as_internal_node():
+    """
+    Tests that a newly created internal node has a feature, threshold, 
+    and children, but no final prediction value.
+    """
+    # Arrange: Create dummy child nodes
+    left_child = Node(value=5)
+    right_child = Node(value=10)
+    
+    # Act: Create an internal node (a split point)
+    internal_node = Node(feature=2, threshold=5.5, left=left_child, right=right_child)
+    
+    # Assert
+    assert internal_node.feature == 2
+    assert internal_node.threshold == 5.5
+    assert internal_node.left is left_child
+    assert internal_node.right is right_child
+    assert internal_node.value is None
+
+def test_node_initialization_as_leaf_node():
+    """
+    Tests that a newly created leaf node has a prediction value and 
+    no split-related attributes.
+    """
+    # Act: Create a leaf node with a classification value (0)
+    leaf_node_class = Node(value=0)
+    # Act: Create a leaf node with a regression value (12.5)
+    leaf_node_reg = Node(value=12.5)
+
+    # Assert Classification Leaf
+    assert leaf_node_class.feature is None
+    assert leaf_node_class.threshold is None
+    assert leaf_node_class.left is None
+    assert leaf_node_class.right is None
+    assert leaf_node_class.value == 0
+
+    # Assert Regression Leaf
+    assert leaf_node_reg.value == 12.5
+
+def test_is_leaf_method_for_internal_node():
+    """
+    Tests that is_leaf() returns False for a node designed for splitting.
+    """
+    # Arrange: Internal node (value is None)
+    internal_node = Node(feature=0, threshold=1.0)
+    
+    # Assert
+    assert internal_node.is_leaf() is False
+
+def test_is_leaf_method_for_leaf_node():
+    """
+    Tests that is_leaf() returns True for a terminal node (value is set).
+    """
+    # Arrange: Leaf node (value is set to 5)
+    leaf_node = Node(value=5)
+    
+    # Assert
+    assert leaf_node.is_leaf() is True
+
+def test_is_leaf_method_for_zero_value():
+    """
+    Tests that is_leaf() works correctly even if the prediction is 0 or False.
+    """
+    # Arrange: Leaf node with prediction 0
+    leaf_node = Node(value=0)
+    
+    # Assert: 0 is not None, so it is a leaf.
+    assert leaf_node.is_leaf() is True
+
+
+
+# --- Mock Implementation tests for BaseDecisionTree---
+
+class MockTree(BaseDecisionTree):
+    """
+    A minimal temporary class inheriting BaseDecisionTree to facilitate direct
+    testing of the shared instance methods (_split, _traverse_tree).
+    """
+    pass
+
+# --- Test Functions ---
+
+def test_split_basic_functionality():
+    """Tests the _split method for correct indexing."""
+    mock_tree = MockTree()
+    X_column = np.array([10, 5, 20, 15, 5])
+    split_thresh = 10
+    
+    left_idxs, right_idxs = mock_tree._split(X_column, split_thresh)
+    
+    # Expected: Indices 0 (10), 1 (5), 4 (5) go left (<= 10)
+    assert np.array_equal(left_idxs, np.array([0, 1, 4]))
+    # Expected: Indices 2 (20), 3 (15) go right (> 10)
+    assert np.array_equal(right_idxs, np.array([2, 3]))
+
+def test_split_edge_case_no_right_split():
+    """Tests when all samples satisfy the split (no right children)."""
+    mock_tree = MockTree()
+    X_column = np.array([1, 2, 3])
+    split_thresh = 10
+    
+    left_idxs, right_idxs = mock_tree._split(X_column, split_thresh)
+    
+    assert len(left_idxs) == 3
+    assert len(right_idxs) == 0
+
+def test_traverse_tree_simple_path():
+    """Tests traversal in a two-leaf tree."""
+    mock_tree = MockTree()
+    
+    left_leaf = Node(value=0)
+    right_leaf = Node(value=1)
+    root_node = Node(feature=1, threshold=0.5, left=left_leaf, right=right_leaf)
+    
+    # Sample 1: Feature 1 = 0.4 (Goes Left: 0.4 <= 0.5)
+    x1 = np.array([99, 0.4]) 
+    # Sample 2: Feature 1 = 0.6 (Goes Right: 0.6 > 0.5)
+    x2 = np.array([10, 0.6])
+
+    assert mock_tree._traverse_tree(x1, root_node) == 0
+    assert mock_tree._traverse_tree(x2, root_node) == 1
+
+def test_traverse_tree_deep_path():
+    """Tests traversal in a multi-level tree."""
+    mock_tree = MockTree()
+    
+    # Tree Structure (reusing Node):
+    # L1: Root (F0 @ 1.0)
+    # L2:   Left (F1 @ 5.0), Right Leaf (Value 20)
+    # L3:     Left Leaf (Value 10), Right Leaf (Value 15)
+    
+    # L3
+    leaf_c = Node(value=10)
+    leaf_d = Node(value=15)
+    # L2
+    node_b = Node(value=20)
+    node_a = Node(feature=1, threshold=5.0, left=leaf_c, right=leaf_d)
+    # L1
+    root_node = Node(feature=0, threshold=1.0, left=node_a, right=node_b)
+
+    # Path 1: F0=0.5 (Left) -> F1=6.0 (Right) -> Value 15
+    x1 = np.array([0.5, 6.0]) 
+    assert mock_tree._traverse_tree(x1, root_node) == 15
+    
+    # Path 2: F0=2.0 (Right) -> Value 20
+    x2 = np.array([2.0, 1.0]) 
+    assert mock_tree._traverse_tree(x2, root_node) == 20
+
+
+
 
 @pytest.fixture
 def int_dataset():

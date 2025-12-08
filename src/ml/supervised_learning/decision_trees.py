@@ -112,10 +112,105 @@ class Node:
         """Check if the node is a leaf (terminal) node."""
         return self.value is not None
 
+class BaseDecisionTree:
+    """
+    Base class providing universal, structural methods for decision tree
+    implementations (Classification and Regression).
+
+    This class contains logic that is identical for all tree types, primarily
+    focused on node splitting and tree traversal, allowing specialized child
+    classes (like DecisionTree and RegressionTree) to inherit these core functions.
+    """
+    
+    def _split(self, X_column: np.ndarray, split_thresh: float) -> Tuple[np.ndarray, np.ndarray]:
+        r"""
+        Splits a single feature column based on a given threshold value.
+
+        This function performs the binary partitioning of samples into two groups
+        based on a simple inequality check: $X_{column} \le threshold$ (left)
+        or $X_{column} > threshold$ (right).
+
+        Parameters
+        ----------
+        X_column : np.ndarray
+            The column vector of feature values for the current node, shape (n_samples,).
+        split_thresh : float
+            The numerical threshold used to define the split.
+
+        Returns
+        -------
+        Tuple[np.ndarray, np.ndarray]
+            A tuple containing two 1D NumPy arrays:
+            - left_idxs: Indices where $X_{column} \le split\_thresh$.
+            - right_idxs: Indices where $X_{column} > split\_thresh$.
+
+        Examples
+        --------
+        >>> X_col = np.array([10, 5, 20, 15, 5])
+        >>> threshold = 10
+        >>> # Mock instance needed only to call the method
+        >>> tree = type('MockTree', (BaseDecisionTree,), {})() 
+        >>> left, right = tree._split(X_col, threshold)
+        >>> left.tolist()
+        [0, 1, 4]
+        >>> right.tolist()
+        [2, 3]
+        """
+        left_idxs = np.argwhere(X_column <= split_thresh).flatten()
+        right_idxs = np.argwhere(X_column > split_thresh).flatten()
+        return left_idxs, right_idxs
+
+    def _traverse_tree(self, x: np.ndarray, node: Node):
+        """
+        Recursively traverses the decision tree graph for a single input sample (x).
+
+        The function follows the split criteria (feature index and threshold) from the 
+        current node until it reaches a leaf node, returning the predicted value 
+        stored there.
+
+        Parameters
+        ----------
+        x : np.ndarray
+            A single sample vector of shape (n_features,).
+        node : Node
+            The current node being visited (starts at the root).
+
+        Returns
+        -------
+        Union[any, float]
+            The predicted value (class label for classification, mean/median for regression)
+            stored at the terminal leaf node.
+            
+        Examples
+        --------
+        >>> # Setup: Create a simple tree (Root splits on feature 0 at 5.0)
+        >>> node_a = Node(value=10) # Left Leaf
+        >>> node_b = Node(value=20) # Right Leaf
+        >>> root = Node(feature=0, threshold=5.0, left=node_a, right=node_b)
+        >>> # Mock instance needed only to call the method
+        >>> tree = type('MockTree', (BaseDecisionTree,), {})() 
+        
+        >>> # Test 1: Go Left (Feature 0 value is 4.0 <= 5.0)
+        >>> x1 = np.array([4.0, 1.0]) 
+        >>> tree._traverse_tree(x1, root)
+        10
+        
+        >>> # Test 2: Go Right (Feature 0 value is 6.0 > 5.0)
+        >>> x2 = np.array([6.0, 0.5]) 
+        >>> tree._traverse_tree(x2, root)
+        20
+        """
+        if node.is_leaf():
+            return node.value
+
+        if x[node.feature] <= node.threshold:
+            return self._traverse_tree(x, node.left)
+        return self._traverse_tree(x, node.right)
+
 
 # --- 4. Decision Tree Classifier ---
 
-class DecisionTree:
+class DecisionTree(BaseDecisionTree):
     r"""
     A decision tree classifier implemented from scratch using NumPy and a graph/node structure.
     
@@ -365,20 +460,6 @@ class DecisionTree:
 
         return parent_impurity - child_impurity
 
-    def _split(self, X_column: np.ndarray, split_thresh: float) -> Tuple[np.ndarray, np.ndarray]:
-        """
-        Split a feature column based on a threshold.
-
-        Returns
-        -------
-        left_idxs : np.ndarray
-            Indices where value <= split_thresh.
-        right_idxs : np.ndarray
-            Indices where value > split_thresh.
-        """
-        left_idxs = np.argwhere(X_column <= split_thresh).flatten()
-        right_idxs = np.argwhere(X_column > split_thresh).flatten()
-        return left_idxs, right_idxs
 
     def _most_common_label(self, y: np.ndarray):
         """Returns the most frequent class label in the array `y`."""
@@ -387,21 +468,3 @@ class DecisionTree:
         # Using numpy to find mode
         values, counts = np.unique(y, return_counts=True)
         return values[np.argmax(counts)]
-
-    def _traverse_tree(self, x: np.ndarray, node: Node):
-        """
-        Recursively traverse the graph for a single sample `x`.
-
-        Parameters
-        ----------
-        x : np.ndarray
-            A single sample vector of shape (n_features,).
-        node : Node
-            The current node being visited.
-        """
-        if node.is_leaf():
-            return node.value
-
-        if x[node.feature] <= node.threshold:
-            return self._traverse_tree(x, node.left)
-        return self._traverse_tree(x, node.right)
