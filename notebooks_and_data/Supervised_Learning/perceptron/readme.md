@@ -103,13 +103,13 @@ The implemented `Perceptron` class provides a practical way to train and evaluat
 
 - **Activation**
   - Computes the linear combination of inputs and weights:
-    \[
+    $$
     z = \mathbf{w} \cdot \mathbf{x} + b
-    \]
+    $$
   - Used internally for prediction and training updates.
 
 - **Label Encoding/Decoding**
-  - Arbitrary binary labels are mapped to \(\{-1, +1\}\) for training.
+  - Arbitrary binary labels are mapped to $\{-1, +1\}$ for training.
   - Predictions are decoded back to the original labels for user-facing results.
 
 - **Prediction**

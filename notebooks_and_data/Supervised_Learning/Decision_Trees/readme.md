@@ -107,14 +107,13 @@ This implementation includes two metric functions:
 Calculates Shannon Entropy. High entropy means the dataset is mixed (impure); low entropy means it is mostly one class.  
 Formula:
 
-\[
-H(S) = -\sum p_i \log_2(p_i)
-\]
+
+$$H(S) = -\sum p_i \log_2(p_i)$$
+
 
 #### **gini(y)**  
 Calculates Gini Impurity. A faster alternative to entropy that minimizes the probability of misclassification.  
 Formula:
 
-\[
-G(S) = 1 - \sum p_i^2
-\]
+
+$$G(S) = 1 - \sum p_i^2$$

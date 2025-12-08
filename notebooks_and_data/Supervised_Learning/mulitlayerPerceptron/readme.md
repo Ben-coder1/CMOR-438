@@ -13,35 +13,35 @@ Predictions are made during the **forward pass** of the network. Data flows from
 
 ### 1.1 Input Layer
 
-Each input feature \( x_i \) is fed into the first layer.
+Each input feature $ x_i $ is fed into the first layer.
 
 ### 1.2 Hidden Layers
 
-For each layer \( l \), the network performs two distinct operations:
+For each layer $ l $, the network performs two distinct operations:
 
 - **Linear Transformation**  
   Each perceptron computes a weighted sum of the inputs from the previous layer, plus a bias term:
 
-  \[
+  $$
   z_j^{(l)} = \sum_i w_{ij}^{(l)} a_i^{(l-1)} + b_j^{(l)}
-  \]
+  $$
 
 - **Activation**  
-  The result is passed through a nonlinear activation function \( \phi \). This output \( a_j \) becomes the input for the next layer:
+  The result is passed through a nonlinear activation function $ \phi $. This output $ a_j $ becomes the input for the next layer:
 
-  \[
+  $$
   a_j^{(l)} = \phi(z_j^{(l)})
-  \]
+  $$
 
 ### 1.3 Output Layer
 
 This implementation **always uses multiple output nodes**, even for binary classification.
 
-The final layer applies **SoftMax** to convert raw scores (\( z \)) into probabilities:
+The final layer applies **SoftMax** to convert raw scores ($ z $) into probabilities:
 
-\[
+$$
 \text{SoftMax}(z_k) = \frac{e^{z_k}}{\sum_{j} e^{z_j}}
-\]
+$$
 
 The class with the highest probability is selected as the prediction.
 
@@ -63,11 +63,11 @@ Backpropagation is effectively a computational trick—specifically, **reverse-m
 
 ### The Math: Layer-by-Layer
 
-We compute the gradient of the loss function \( L \) with respect to any weight \( w \) using the Chain Rule:
+We compute the gradient of the loss function $ L $ with respect to any weight $ w $ using the Chain Rule:
 
-\[
+$$
 \frac{\partial L}{\partial w} = \frac{\partial L}{\partial a} \cdot \frac{\partial a}{\partial z} \cdot \frac{\partial z}{\partial w}
-\]
+$$
 
 This process happens in three steps:
 
@@ -77,27 +77,27 @@ We compare the prediction to the actual target to find the error at the output l
 
 #### 2. Propagate the Error Backward
 
-We calculate an "error term" (often denoted as \( \delta \)) for layer \( l \) by taking the error from the layer ahead (\( l+1 \)) and multiplying it by the weights connecting them and the derivative of the activation function \( \phi' \):
+We calculate an "error term" (often denoted as $ \delta $) for layer $ l $ by taking the error from the layer ahead ($ l+1 $) and multiplying it by the weights connecting them and the derivative of the activation function $ \phi' $:
 
-\[
+$$
 \delta^{(l)} = \left( (w^{(l+1)})^T \delta^{(l+1)} \right) \odot \phi'(z^{(l)})
-\]
+$$
 
 This is the recursive "trick"—we use the error already computed for the deeper layer to solve the current layer.
 
 #### 3. Update the Weights
 
-Once we have the error term \( \delta \) for a specific node, the gradient for the weight connecting to it is simply that error multiplied by the input coming into the node (\( a^{(l-1)} \)):
+Once we have the error term $ \delta $ for a specific node, the gradient for the weight connecting to it is simply that error multiplied by the input coming into the node ($ a^{(l-1)} $):
 
-\[
+$$
 \frac{\partial L}{\partial w_{ij}} = \delta_j^{(l)} \cdot a_i^{(l-1)}
-\]
+$$
 
-The weights are then updated using the learning rate \( \eta \):
+The weights are then updated using the learning rate $ \eta $:
 
-\[
+$$
 w_{ij} \leftarrow w_{ij} - \eta \frac{\partial L}{\partial w_{ij}}
-\]
+$$
 
 ---
 
@@ -107,9 +107,9 @@ Activation functions introduce **nonlinearity** into the network. Without them, 
 
 ### ReLU (Rectified Linear Unit)
 
-\[
+$$
 \phi(z) = \max(0, z)
-\]
+$$
 
 - Computationally efficient  
 - Induces sparsity  
@@ -118,9 +118,9 @@ Activation functions introduce **nonlinearity** into the network. Without them, 
 
 ### Sigmoid
 
-\[
+$$
 \phi(z) = \frac{1}{1 + e^{-z}}
-\]
+$$
 
 - Squashes output between 0 and 1  
 - **Drawback:** Can cause gradients to vanish during backpropagation, stopping learning
