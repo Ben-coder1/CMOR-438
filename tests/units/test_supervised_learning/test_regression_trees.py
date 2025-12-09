@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 from ml.supervised_learning.decision_trees import Node
-from ml.supervised_learning.Regression_trees import RegressionTree, variance, mean_absolute_deviation
+from ml.supervised_learning.regression_trees import RegressionTree, variance, mean_absolute_deviation
 from ml.utils._errors_and_warnings import InputShapeError
 
 # ==========================================

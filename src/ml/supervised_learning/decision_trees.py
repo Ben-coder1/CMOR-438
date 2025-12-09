@@ -112,6 +112,7 @@ class Node:
         """Check if the node is a leaf (terminal) node."""
         return self.value is not None
 
+# --- 1. Base Decision Tree Class ---
 class BaseDecisionTree:
     """
     Base class providing universal, structural methods for decision tree
