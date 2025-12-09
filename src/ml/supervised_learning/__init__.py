@@ -5,3 +5,4 @@ from .decision_trees import *
 from .linear_regression import *
 from .Logitic_Regression import *
 from .Regression_trees import *
+from .ensemble_methods import *

@@ -474,3 +474,7 @@ class ModelInterfaceError(TypeError):
 
 class InputShapeError(ValueError):
     pass
+
+class InvalidSignatureError(ValueError):
+    """Raised when a model signature string refers to a missing method."""
+    pass
