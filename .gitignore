@@ -1,2 +1,13 @@
 .venv
 myenv/
+
+# Bytecode files
+*.pyc
+__pycache__/
+
+# Common Operating System/IDE files
+.DS_Store
+.vscode/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
