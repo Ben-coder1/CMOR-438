@@ -1,4 +1,4 @@
-from ml.supervised_learning.Logitic_Regression import LogisticRegression
+from ml.supervised_learning.logitic_regression import LogisticRegression
 import numpy as np
 import pytest
 

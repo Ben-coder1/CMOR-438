@@ -120,7 +120,7 @@ class RegressionTree(BaseDecisionTree):
         >>> y_train = np.array([5, 6, 10])
         >>> model = RegressionTree()
         >>> model.fit(X_train, y_train)
-        <ml.supervised_learning.Regression_trees.RegressionTree object at ...>
+        <ml.supervised_learning.regression_trees.RegressionTree object at ...>
         """
         X_clean = _ensure_numeric_array(X, name="X", ndim=2)
         X_clean = _ensure_no_nan(X_clean, name="X")
@@ -158,7 +158,7 @@ class RegressionTree(BaseDecisionTree):
         >>> y_train = np.array([5, 6, 10])
         >>> model = RegressionTree(max_depth=1)
         >>> model.fit(X_train, y_train)
-        <ml.supervised_learning.Regression_trees.RegressionTree object at ...>
+        <ml.supervised_learning.regression_trees.RegressionTree object at ...>
         >>> # Prediction is mean(5, 6, 10) = 10.0 (due to max_depth=1)
         >>> model.predict(np.array([[15]]))
         array([10.])
