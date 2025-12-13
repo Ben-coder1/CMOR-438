@@ -1,3 +1,5 @@
+
+# Python virtual environment directories
 .venv
 myenv/
 
@@ -11,3 +13,8 @@ __pycache__/
 
 # Jupyter Notebook checkpoints
 .ipynb_checkpoints
+
+# Python packaging/build files
+*.egg-info/
+dist/
+build/
