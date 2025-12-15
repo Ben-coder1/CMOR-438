@@ -41,13 +41,14 @@ Initializes the model. You can store training data (`X`, `y`) during initializat
 
 ## Methods
 
-### `predict(target, classify=True, K=5, dist=EuclideanDistance)`
+### `predict(target, classify=True, K=5, X = None, y = None, dist=EuclideanDistance)`
 **Purpose:** Specific prediction for a single target vector.  
 
 **Parameters:**
 - **target**: The input vector to predict.  
 - **classify (bool)**: If `True`, performs classification (majority vote). If `False`, performs regression (average).  
-- **K (int)**: Number of neighbors to consider.  
+- **K (int)**: Number of neighbors to consider.
+- **X**, *y*: Training data used for prediction
 
 **Returns:** The predicted label (scalar).
 
@@ -62,14 +63,6 @@ Initializes the model. You can store training data (`X`, `y`) during initializat
 
 ---
 
-### `find_neighbors(target, K=5)`
-**Purpose:** Inspection tool to retrieve the exact neighbors used for a prediction.  
-
-**Returns:**  
-A list of tuples, where each tuple contains:  
-`(neighbor_vector, neighbor_label, distance_to_target)`
-
----
 
 ## Data Constraints & Error Handling
 This implementation includes strict validation logic:
