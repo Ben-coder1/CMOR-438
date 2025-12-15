@@ -12,7 +12,7 @@ This is a major advantage over linear models. The algorithm can successfully cla
 **Example:** If Class A exists in both the top-left and bottom-right corners, while Class B sits in the middle, the tree can isolate the middle region and correctly group the separated corners as the same class.
 
 **Non-Linear Separation:**  
-It does not assume a straight-line relationship between features. It solves complex problems by creating a "staircase" of decision boundaries.
+It works even when the data is not linearly seperable. It solves complex problems by creating a "staircase" of decision boundaries.
 
 **Multi-Criterion Support:**  
 Supports both Entropy (Information Gain) and Gini Impurity for determining optimal splits.
