@@ -43,15 +43,9 @@ The perceptron learns by adjusting weights **only** when it makes an incorrect p
 
 For each training example $(x, y)$, if the prediction $\hat{y} \neq y$:
 
-1.  **Update Weights:**
-    $$
-    w_i \leftarrow w_i + \eta (y - \hat{y}) x_i
-    $$
+1.  **Update Weights:** $w_i \leftarrow w_i + \eta (y - \hat{y}) x_i$
 
-2.  **Update Bias:**
-    $$
-    b \leftarrow b + \eta (y - \hat{y})
-    $$
+2.  **Update Bias:**  $b\leftarrow b + \eta (y - \hat{y})$
 
 > **Note:** If the prediction is correct ($y - \hat{y} = 0$), the weights remain unchanged.
 
@@ -102,10 +96,7 @@ The implemented `Perceptron` class provides a practical way to train and evaluat
   - Maintains a training history (`history`) and class mapping (`classes_`).
 
 - **Activation**
-  - Computes the linear combination of inputs and weights:
-    $$
-    z = \mathbf{w} \cdot \mathbf{x} + b
-    $$
+  - Computes the linear combination of inputs and weights: $z = \mathbf{w} \cdot \mathbf{x} + b$
   - Used internally for prediction and training updates.
 
 - **Label Encoding/Decoding**
