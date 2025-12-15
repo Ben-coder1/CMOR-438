@@ -13,4 +13,4 @@ Machine Learning refers to computational methods where algorithms are designed t
 
 <br>
 
-<sub>A variety of AI tools, including large language models (LLMs), were utilized in making this project, including for writing code and readmes, and creating examples.</sub>
+<sub>A variety of AI tools, including large language models (LLMs), were utilized in making this project, including for writing code, readmes and tests, and creating examples.</sub>
