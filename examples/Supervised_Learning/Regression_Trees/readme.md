@@ -30,15 +30,13 @@ A key feature of this implementation is the ability to choose the "Impurity" met
 **Use Case:** The default setting. Best for standard regression tasks where you want to minimize the Mean Squared Error (MSE).  
 **The Logic:** Large errors are penalized heavily.  
 **Leaf Aggregation:** Predictions are made using the Mean (np.mean) of samples in the leaf.  
-**Formula:**  
-\( Var(y) = \frac{1}{n} \sum (y_i - \bar{y})^2 \)
+**Formula:**  $$Var(y) = \frac{1}{n} \sum (y_i - \bar{y})^2$$
 
 ## 2. Mean Absolute Deviation (Mean Absolute Error)
 **Use Case:** Best for data with outliers or when you want to minimize Mean Absolute Error (MAE).  
 **The Logic:** Robust to extreme values; an outlier won't skew the prediction as drastically as it would with variance.  
 **Leaf Aggregation:** Predictions are made using the Median (np.median) of samples in the leaf.  
-**Formula:**  
-\( MAD(y) = \frac{1}{n} \sum |y_i - \text{median}(y)| \)
+**Formula:**  $$MAD(y) = \frac{1}{n} \sum |y_i - \text{median}(y)|$$
 
 ---
 
