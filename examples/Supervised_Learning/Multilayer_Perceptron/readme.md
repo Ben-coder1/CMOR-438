@@ -176,10 +176,8 @@ The **Multilayer Perceptron (MLP)** implementation provides a flexible framework
 ### Prediction
 - **Forward Pass**
   - Computes outputs by propagating inputs through all layers.
-  - Uses **SoftMax** in the final layer to produce class probabilities.
 - **Label Selection**
   - Returns predicted class indices based on the highest probability.
-  - Always outputs multiple probabilities, even for binary classification.
 
 ### Practical Features
 - **Verbose Mode**
